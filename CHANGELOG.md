@@ -1,5 +1,13 @@
 # Change Log
 
+## v2.0.6
+
+### Reliability
+
+* The default refresh interval is now 60 seconds, matching `config.schema.json`, instead of 5 seconds. The plugin asked LG for the full device list every 5 seconds as a fallback to MQTT, and LG now answers that with HTTP 429 (result code `9012`, "Please consider using the official API"). Invalid or zero values also fall back to 60 seconds. From [nVuln/homebridge-lg-thinq#395](https://github.com/nVuln/homebridge-lg-thinq/pull/395) by Frank Aune, fixing [nVuln/homebridge-lg-thinq#385](https://github.com/nVuln/homebridge-lg-thinq/issues/385).
+* ThinQ1 devices, which only get updates from this refresh, now update every 60 seconds unless `refresh_interval` is set in the config.
+* Documented the `refresh_interval` option in the README. The Homebridge UI does not show it, so it is set by editing the config JSON.
+
 ## v2.0.5
 
 Fixes from [nVuln/homebridge-lg-thinq#401](https://github.com/nVuln/homebridge-lg-thinq/pull/401) by Vojtech Knyttl, which was never merged in the original repository.

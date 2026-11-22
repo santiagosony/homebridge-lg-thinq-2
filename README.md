@@ -107,6 +107,7 @@ To enable or configure only specific devices, list them by device id:
 | `language` | Yes | LG account language code, for example `en-US`. |
 | `devices` | No | Empty or omitted enables all supported discovered devices. |
 | `thinq1` | No | Advanced legacy option. Set to `true` manually to enable ThinQ1 devices. |
+| `refresh_interval` | No | Seconds between device status refreshes from LG. Default `60`. ThinQ2 devices also get instant updates over MQTT, so this is only a fallback for them; ThinQ1 devices are updated only by this refresh. Low values can make LG reject requests with HTTP 429 (too many requests). |
 
 Device type is detected from LG discovery data. Device-specific settings appear in the Homebridge UI after devices have been discovered.
 
