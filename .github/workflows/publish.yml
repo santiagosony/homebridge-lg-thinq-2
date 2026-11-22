@@ -4,11 +4,10 @@ name: Publish to npm
 # A version is published only if the "version" in package.json is not on npm yet,
 # so pushes that do not change the version just run the checks.
 #
-# Authentication (one of):
-#   - Repository secret NPM_TOKEN: an npm granular access token with publish rights.
-#   - npm trusted publishing (OIDC): configure this repository and workflow file
-#     (publish.yml) as a trusted publisher on npmjs.com, then set the repository
-#     variable NPM_TRUSTED_PUBLISHING to "true". No token is needed.
+# Authentication: npm trusted publishing (OIDC). This repository and this workflow
+# file (publish.yml) are registered as the trusted publisher of the package on
+# npmjs.com, so no npm token is needed. Do not rename this file without updating
+# the trusted publisher settings on npmjs.com.
 
 on:
   push:
@@ -28,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # push the release tag
-      id-token: write # npm provenance and trusted publishing
+      id-token: write # required for npm trusted publishing (OIDC) and provenance
 
     steps:
       - name: Checkout repository
@@ -40,6 +39,9 @@ jobs:
           node-version: 24.x
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm (trusted publishing needs npm 11.5.1 or later)
+        run: npm install -g npm@11
 
       - name: Install dependencies (npm ci)
         run: npm ci
@@ -75,28 +77,12 @@ jobs:
             echo "$NAME@$VERSION is not on npm yet and will be published."
           fi
 
-      - name: Check npm credentials
-        id: auth
-        if: steps.version.outputs.published == 'false'
-        env:
-          HAS_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
-          TRUSTED: ${{ vars.NPM_TRUSTED_PUBLISHING == 'true' }}
-        run: |
-          if [[ "$HAS_TOKEN" == "true" || "$TRUSTED" == "true" ]]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Skipping npm publish: add the NPM_TOKEN repository secret or enable trusted publishing (see the comments at the top of publish.yml)."
-          fi
-
       - name: Publish to npm
-        if: steps.version.outputs.published == 'false' && steps.auth.outputs.ready == 'true'
+        if: steps.version.outputs.published == 'false'
         run: npm publish --provenance --access public --tag "${{ steps.version.outputs.dist_tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Tag the release
-        if: steps.version.outputs.published == 'false' && steps.auth.outputs.ready == 'true'
+        if: steps.version.outputs.published == 'false'
         run: |
           TAG="v${{ steps.version.outputs.version }}"
           if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
