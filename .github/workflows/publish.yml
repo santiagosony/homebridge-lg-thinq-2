@@ -98,14 +98,30 @@ jobs:
       - name: Publish to npm
         id: publish
         if: steps.version.outputs.published == 'false'
-        run: npm publish --provenance --access public --tag "${{ steps.version.outputs.dist_tag }}"
+        run: |
+          set +e
+          npm publish --provenance --access public --tag "${{ steps.version.outputs.dist_tag }}" 2>&1 | tee publish.log
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          if [[ $STATUS -eq 0 ]]; then
+            echo "result=published" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # npm takes a few minutes to process a new version and keeps it staged meanwhile,
+          # so a run that starts in that window can see it as unpublished and try again.
+          if grep -qiE "previously (staged|published) version|cannot publish over" publish.log; then
+            echo "result=already" >> "$GITHUB_OUTPUT"
+            echo "::warning::This version was already submitted to npm by an earlier run (npm may still be processing it). Nothing to publish."
+            exit 0
+          fi
+          exit $STATUS
 
       - name: Create GitHub release
-        if: steps.publish.outcome == 'success' || steps.version.outputs.published == 'true' || inputs.release_version != ''
+        if: steps.publish.outputs.result != '' || steps.version.outputs.published == 'true' || inputs.release_version != ''
         env:
           GH_TOKEN: ${{ github.token }}
           NAME: ${{ steps.version.outputs.name }}
-          JUST_PUBLISHED: ${{ steps.publish.outcome == 'success' }}
+          PUBLISH_RESULT: ${{ steps.publish.outputs.result }}
           INPUT_VERSION: ${{ inputs.release_version }}
           INPUT_TARGET: ${{ inputs.release_target }}
         run: |
@@ -121,8 +137,8 @@ jobs:
             exit 0
           fi
           # npm can take a few minutes to list a version it just accepted, so only
-          # check versions that were not published by this run.
-          if [[ "$JUST_PUBLISHED" != "true" ]] && ! npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
+          # check versions that were not submitted to npm by this run.
+          if [[ -z "$PUBLISH_RESULT" ]] && ! npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
             echo "::error::$NAME@$VERSION is not on npm, so no release is created for it."
             exit 1
           fi
@@ -132,7 +148,7 @@ jobs:
           if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
             if [[ -n "$INPUT_TARGET" ]]; then
               TARGET="$INPUT_TARGET"
-            elif [[ "$JUST_PUBLISHED" == "true" ]]; then
+            elif [[ "$PUBLISH_RESULT" == "published" ]]; then
               TARGET="$GITHUB_SHA"
             elif [[ -z "$INPUT_VERSION" ]]; then
               # Already published earlier from main: tag the commit that set this version.
