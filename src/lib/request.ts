@@ -35,7 +35,22 @@ function errorWithCause<T extends Error>(error: T, cause: unknown): T {
   return error;
 }
 
-const client = axios.create();
+/**
+ * User-Agent sent with every request unless the caller sets its own.
+ *
+ * LG's account servers reject requests that identify as axios (the default
+ * "axios/<version>" User-Agent) with HTTP 403, for example on POST /spx/preLogin,
+ * which made login fail. A browser User-Agent is accepted.
+ * See nVuln/homebridge-lg-thinq#402 and nVuln/homebridge-lg-thinq#400.
+ */
+export const BROWSER_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
+  + '(KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36 Edg/93.0.961.44';
+
+const client = axios.create({
+  headers: {
+    'User-Agent': BROWSER_USER_AGENT,
+  },
+});
 client.defaults.timeout = 60000; // 60s timeout
 
 client.interceptors.request.use((config) => {

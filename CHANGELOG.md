@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.0.3
+
+### Login
+
+* Fixed LG account login failing with `LG pre-login failed: Request failed with status code 403`. LG's account servers now reject requests that identify as axios (the default `axios/<version>` User-Agent), so all plugin requests send a browser User-Agent unless they set their own. Requests to the ThinQ API keep their `okhttp` User-Agent. This affects login from the Homebridge UI, the `thinq` CLI, and username/password config. Based on [nVuln/homebridge-lg-thinq#400](https://github.com/nVuln/homebridge-lg-thinq/pull/400), fixing [nVuln/homebridge-lg-thinq#402](https://github.com/nVuln/homebridge-lg-thinq/issues/402).
+* Added tests that run the login against a local server that rejects the axios User-Agent like LG does.
+
 ## v2.0.2
 
 ### Packaging and Releases

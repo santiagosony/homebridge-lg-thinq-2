@@ -5,7 +5,7 @@ import { URL } from 'url';
 import { AuthenticationError, ManualProcessNeededErrorCode, TokenError } from '../errors/index.js';
 import * as constants from './constants.js';
 import { Gateway } from './Gateway.js';
-import { requestClient } from './request.js';
+import { BROWSER_USER_AGENT, requestClient } from './request.js';
 import { Session } from './Session.js';
 import { Logger } from 'homebridge';
 import { createNoopLogger } from './noopLogger.js';
@@ -179,7 +179,7 @@ export class Auth {
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept-Language': 'en-US,en;q=0.9',
 
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36 Edg/93.0.961.44',
+      'User-Agent': BROWSER_USER_AGENT,
     };
     // create emp session and get access token
     const authorize = await requestClient.get(empUrl.href, {
