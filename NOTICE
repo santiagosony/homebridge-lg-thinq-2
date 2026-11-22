@@ -1,0 +1,13 @@
+Homebridge LG ThinQ 2
+https://github.com/santiagosony/homebridge-lg-thinq-2
+
+This product is a modified version of "homebridge-lg-thinq"
+(https://github.com/nVuln/homebridge-lg-thinq), originally created by nVuln
+and its contributors, and distributed under the Apache License, Version 2.0.
+
+Modifications made in this repository are listed in CHANGELOG.md and in the
+git commit history. Development of these modifications is assisted by Claude,
+an AI assistant made by Anthropic.
+
+This project is not affiliated with, endorsed by, or sponsored by LG
+Electronics. "LG" and "ThinQ" are trademarks of their respective owners.

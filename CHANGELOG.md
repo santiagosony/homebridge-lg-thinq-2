@@ -1,5 +1,16 @@
 # Change Log
 
+## Unreleased (homebridge-lg-thinq-2)
+
+### Project
+
+* Continued the project as `homebridge-lg-thinq-2`, based entirely on [nVuln/homebridge-lg-thinq](https://github.com/nVuln/homebridge-lg-thinq), because the original repository stopped receiving updates. The original commit history is preserved.
+* Updated package name, repository, issue tracker, and homepage references to the new repository, and added attribution to the original project in the README, `NOTICE`, and `package.json`.
+* Changed the internal plugin name to `homebridge-lg-thinq-2`. The platform name (`LGThinQ`) and config format are unchanged, so existing configs keep working.
+* Development of this version is assisted by Claude (Anthropic's AI assistant).
+
+All entries below were released as `homebridge-lg-thinq` by the original authors.
+
 ## v2.0.0
 
 ### Compatibility and Packaging

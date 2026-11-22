@@ -1,8 +1,8 @@
 {
-  "displayName": "Homebridge LG ThinQ",
-  "name": "homebridge-lg-thinq",
+  "displayName": "Homebridge LG ThinQ 2",
+  "name": "homebridge-lg-thinq-2",
   "version": "2.0.0",
-  "description": "A Homebridge plugin for controlling/monitoring LG ThinQ devices via LG ThinQ platform.",
+  "description": "Community-maintained continuation of homebridge-lg-thinq: a Homebridge plugin for controlling/monitoring LG ThinQ devices via the LG ThinQ platform.",
   "license": "Apache-2.0",
   "type": "module",
   "publishConfig": {
@@ -10,10 +10,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nVuln/homebridge-lg-thinq.git"
+    "url": "git+https://github.com/santiagosony/homebridge-lg-thinq-2.git"
   },
   "bugs": {
-    "url": "https://github.com/nVuln/homebridge-lg-thinq/issues"
+    "url": "https://github.com/santiagosony/homebridge-lg-thinq-2/issues"
   },
   "engines": {
     "homebridge": "^1.11.2 || ^2.0.0",
@@ -58,8 +58,11 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.2"
   },
-  "homepage": "https://github.com/nVuln/homebridge-lg-thinq#readme",
-  "author": "nVuln",
+  "homepage": "https://github.com/santiagosony/homebridge-lg-thinq-2#readme",
+  "author": "santiagosony",
+  "contributors": [
+    "nVuln (original author, https://github.com/nVuln/homebridge-lg-thinq)"
+  ],
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.3",
     "aws-iot-device-sdk": "^2.2.16",

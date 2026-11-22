@@ -2,12 +2,20 @@
 <img src="https://raw.githubusercontent.com/homebridge/branding/latest/logos/homebridge-wordmark-logo-vertical.png" width="150">
 </p>
 
-# Homebridge LG ThinQ
+# Homebridge LG ThinQ 2
 
-[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
-[![npm](https://img.shields.io/npm/v/homebridge-lg-thinq/latest?label=latest)](https://www.npmjs.com/package/homebridge-lg-thinq)
-[![npm](https://img.shields.io/npm/dt/homebridge-lg-thinq)](https://www.npmjs.com/package/homebridge-lg-thinq)
-[![join-discord](https://badgen.net/badge/icon/discord?icon=discord&label=homebridge-lg-thinq)](https://discord.gg/wEfQpCDtS7)
+[![npm](https://img.shields.io/npm/v/homebridge-lg-thinq-2/latest?label=latest)](https://www.npmjs.com/package/homebridge-lg-thinq-2)
+[![npm](https://img.shields.io/npm/dt/homebridge-lg-thinq-2)](https://www.npmjs.com/package/homebridge-lg-thinq-2)
+
+> [!IMPORTANT]
+> **About this project**
+>
+> This plugin is based entirely on [nVuln/homebridge-lg-thinq](https://github.com/nVuln/homebridge-lg-thinq), created by [nVuln](https://github.com/nVuln) and its contributors.
+> The original repository stopped receiving updates (open issues and pull requests went unanswered for months), so its code was cloned into this new repository to keep working on it: Node.js 24 support, login fixes, and pending community fixes.
+>
+> All credit for the original work goes to its authors. This is not an official release of the original plugin, and it is not affiliated with or endorsed by LG.
+>
+> **Vibe-coded with Claude:** development of this version is being done with the help of [Claude](https://claude.ai/code), Anthropic's AI assistant. Changes are built, linted, and tested before release, but please review them and report any problems you find.
 
 ## Overview
 
@@ -22,11 +30,21 @@ This plugin is not an official LG API client. It works with LG ThinQ account dat
 
 ## Installation
 
-Install the plugin from the Homebridge UI, or install it manually:
+Install the plugin from the Homebridge UI (search for `homebridge-lg-thinq-2`), or install it manually:
 
 ```sh
-npm install -g homebridge-lg-thinq
+npm install -g homebridge-lg-thinq-2
 ```
+
+### Migrating from `homebridge-lg-thinq`
+
+This plugin uses the same platform name (`LGThinQ`) and the same configuration format as the original plugin, so your existing config can be kept.
+
+1. Uninstall `homebridge-lg-thinq`, keeping its configuration.
+2. Install `homebridge-lg-thinq-2`.
+3. Restart Homebridge.
+
+Do not install both plugins at the same time, because they register the same platform name. Device cache data is stored in a new folder, so the first start may take a little longer while devices are discovered again.
 
 ## Configuration
 
@@ -90,51 +108,16 @@ To enable or configure only specific devices, list them by device id:
 
 Device type is detected from LG discovery data. Device-specific settings appear in the Homebridge UI after devices have been discovered.
 
-## Supported Devices
-
-Support depends on the model data returned by LG. If a device appears in the LG ThinQ app but not in Homebridge, open an issue with the device type, model, country, and debug logs.
-
-| Device | Status | Control | ThinQ2 | ThinQ1 |
-| --- | --- | --- | --- | --- |
-| Refrigerator | Supported | Supported | Yes | Yes |
-| Air Purifier | Supported | Supported | Yes | Yes |
-| AeroTower | Supported | Supported | Yes | No |
-| Washer / Dryer / WashTower | Supported | Limited | Yes | Yes |
-| Dishwasher | Supported | No | Yes | No |
-| Dehumidifier | Supported | Partial | Yes | No |
-| Air Conditioner | Supported | Supported | Yes | Yes |
-| Styler | Supported | Limited | Yes | No |
-| Range Hood | Supported | Supported | Yes | Yes |
-| Oven | Supported | Partial | Yes | No |
-| Microwave | Supported | Partial | Yes | No |
-
-## Troubleshooting
-
-Enable Homebridge debug logging when troubleshooting setup or device behavior. Include startup logs, device type/model information, country, language, and the error message when opening an issue.
-
-## CLI Usage
-
-```sh
-$ thinq
-Usage: thinq [options] [command]
-
-Options:
-  -c, --country <type>         Country code for account (default: "US")
-  -l, --language <type>        Language code for account (default: "en-US")
-  -h, --help                   display help for command
-
-Commands:
-  login <username> <password>  Obtain refresh_token from LG account
-  auth                         Obtain refresh_token from account logged by Google Account, Apple ID
-  help [command]               display help for command
-```
-
 ## Support
 
-If you have a question, start a [discussion](https://github.com/nVuln/homebridge-lg-thinq/discussions/new) or leave a message in the [Discord channel](https://discord.gg/wEfQpCDtS7).
+If you would like to report a bug or ask a question, open an [issue](https://github.com/santiagosony/homebridge-lg-thinq-2/issues/new/choose) in this repository.
 
-If you would like to report a bug, open an [issue](https://github.com/nVuln/homebridge-lg-thinq/issues/new/choose).
+Please do not report problems with this version in the original repository.
+
+## Credits and License
+
+This project is a continuation of [homebridge-lg-thinq](https://github.com/nVuln/homebridge-lg-thinq) by [nVuln](https://github.com/nVuln), licensed under the [Apache License 2.0](LICENSE). The full commit history of the original project is preserved in this repository. See [NOTICE](NOTICE) for attribution details.
 
 ## Contributors
 
-Special thanks to [carlosgamezvillegas](https://github.com/carlosgamezvillegas) for implementing Oven and Microwave device support. More detail in [#87](https://github.com/nVuln/homebridge-lg-thinq/issues/87).
+Special thanks to [carlosgamezvillegas](https://github.com/carlosgamezvillegas) for implementing Oven and Microwave device support. More detail in [nVuln/homebridge-lg-thinq#87](https://github.com/nVuln/homebridge-lg-thinq/issues/87).
