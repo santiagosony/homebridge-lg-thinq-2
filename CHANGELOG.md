@@ -1,6 +1,15 @@
 # Change Log
 
-## Unreleased (homebridge-lg-thinq-2)
+## v2.0.1
+
+### Compatibility
+
+* Added Node.js 26 support (`engines.node` is now `^22.13.0 || ^24.0.0 || ^26.0.0`), so Homebridge no longer warns that the plugin does not support Node.js 26. Node.js 26 requires Homebridge 2.3.0 or later.
+* Verified on Node.js 26.13.1: lint, build, and unit tests pass, and the plugin loads and runs in Homebridge 2.5.0 without deprecation warnings. The CLI and the Homebridge UI server also start correctly.
+* Added Node.js 26 to the CI test matrix.
+* Updated the Homebridge development dependency to 2.5.0, so tests run against a Homebridge version that supports Node.js 26.
+
+## v2.0.0 (first release as homebridge-lg-thinq-2)
 
 ### Project
 
