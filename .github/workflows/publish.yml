@@ -157,8 +157,20 @@ jobs:
               echo "::error::Tag $TAG does not exist. Run the workflow again with release_target set to the commit that was published."
               exit 1
             fi
-            # Create the tag with git: creating it through the releases API is refused
-            # for commits that change workflow files.
+            # GitHub refuses to let the workflow token create a tag on a commit whose
+            # workflow files differ from the commit being built (that counts as changing
+            # workflows, which needs a permission this token cannot have). If only
+            # workflow files changed since the published commit, the package content
+            # is the same, so tag the current commit instead.
+            if ! git diff --quiet "$TARGET" "$GITHUB_SHA" -- .github/workflows; then
+              if git diff --quiet "$TARGET" "$GITHUB_SHA" -- . ':(exclude).github'; then
+                echo "Only workflow files changed since $TARGET, so $TAG is created at $GITHUB_SHA (same package content)."
+                TARGET="$GITHUB_SHA"
+              else
+                echo "::error::Workflow files changed since $TARGET, so this workflow cannot create $TAG. Create the $TAG tag and release by hand in GitHub (Releases > Draft a new release)."
+                exit 1
+              fi
+            fi
             echo "Tagging $TAG at $TARGET."
             git tag "$TAG" "$TARGET"
             git push origin "refs/tags/$TAG"
