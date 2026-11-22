@@ -2,7 +2,9 @@ name: Publish to npm
 
 # Publishes the package to npm when a new version reaches main, then creates the
 # vX.Y.Z tag and a GitHub release whose notes come from that version's section in
-# CHANGELOG.md (a heading that starts with "## vX.Y.Z").
+# CHANGELOG.md (a heading that starts with "## vX.Y.Z"). If the current version is
+# already on npm but has no GitHub release yet, the release is created on the next
+# push, tagging the commit that set that version in package.json.
 # A version is published only if the "version" in package.json is not on npm yet,
 # so pushes that do not change the version just run the checks.
 #
@@ -46,6 +48,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history, to find the commit that set a version
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -97,7 +101,7 @@ jobs:
         run: npm publish --provenance --access public --tag "${{ steps.version.outputs.dist_tag }}"
 
       - name: Create GitHub release
-        if: steps.publish.outcome == 'success' || inputs.release_version != ''
+        if: steps.publish.outcome == 'success' || steps.version.outputs.published == 'true' || inputs.release_version != ''
         env:
           GH_TOKEN: ${{ github.token }}
           NAME: ${{ steps.version.outputs.name }}
@@ -112,26 +116,34 @@ jobs:
           fi
           TAG="v$VERSION"
 
-          if ! npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
-            echo "::error::$NAME@$VERSION is not on npm, so no release is created for it."
-            exit 1
-          fi
           if gh release view "$TAG" > /dev/null 2>&1; then
             echo "Release $TAG already exists."
             exit 0
+          fi
+          # npm can take a few minutes to list a version it just accepted, so only
+          # check versions that were not published by this run.
+          if [[ "$JUST_PUBLISHED" != "true" ]] && ! npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
+            echo "::error::$NAME@$VERSION is not on npm, so no release is created for it."
+            exit 1
           fi
 
           # Pick the commit for the tag: an existing tag is reused as it is.
           TARGET_ARGS=()
           if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
-            if [[ "$JUST_PUBLISHED" == "true" && -z "$INPUT_VERSION" ]]; then
-              TARGET_ARGS=(--target "$GITHUB_SHA")
-            elif [[ -n "$INPUT_TARGET" ]]; then
-              TARGET_ARGS=(--target "$INPUT_TARGET")
-            else
+            if [[ -n "$INPUT_TARGET" ]]; then
+              TARGET="$INPUT_TARGET"
+            elif [[ "$JUST_PUBLISHED" == "true" ]]; then
+              TARGET="$GITHUB_SHA"
+            elif [[ -z "$INPUT_VERSION" ]]; then
+              # Already published earlier from main: tag the commit that set this version.
+              TARGET=$(git log -n 1 --format=%H -G "\"version\": \"$VERSION\"" -- package.json)
+            fi
+            if [[ -z "${TARGET:-}" ]]; then
               echo "::error::Tag $TAG does not exist. Run the workflow again with release_target set to the commit that was published."
               exit 1
             fi
+            echo "Tagging $TAG at $TARGET."
+            TARGET_ARGS=(--target "$TARGET")
           fi
 
           # Release notes: the CHANGELOG section of this version, up to the next "## " heading.
