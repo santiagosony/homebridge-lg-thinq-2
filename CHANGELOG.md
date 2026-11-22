@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Development
+
+* Updated development dependencies to clear all `npm audit` reports and Dependabot alerts (16, from critical to low): `handlebars`, `js-yaml`, `browserslist`, `baseline-browser-mapping`, `@babel/core`, `eslint`, `typescript-eslint`, `@humanfs/node`, and `minimatch`. `nodemon` is given `minimatch` 11 through an override, because every 10.x release is affected and nodemon still asks for 10.x. These packages are only used to build and test the plugin; the published package does not change.
+
 ## v2.0.7
 
 ### Security
