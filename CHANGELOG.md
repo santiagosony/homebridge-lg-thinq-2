@@ -1,5 +1,13 @@
 # Change Log
 
+## v2.0.2
+
+### Packaging and Releases
+
+* Declared the `supports-hap` keyword, so the Homebridge UI knows the plugin publishes accessories over HAP (HomeKit).
+* Limited the published package to what the plugin needs at runtime with the `files` field in `package.json`: source maps, TypeScript declaration files, and sample data are no longer shipped (208 files and 257 kB before, 74 files and 149 kB now). Removed the redundant `.npmignore`.
+* Each version published to npm now gets a GitHub release, with notes taken from this changelog.
+
 ## v2.0.1
 
 ### Compatibility

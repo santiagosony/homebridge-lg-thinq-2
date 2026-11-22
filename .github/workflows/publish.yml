@@ -1,8 +1,13 @@
 name: Publish to npm
 
-# Publishes the package to npm when a new version reaches main.
+# Publishes the package to npm when a new version reaches main, then creates the
+# vX.Y.Z tag and a GitHub release whose notes come from that version's section in
+# CHANGELOG.md (a heading that starts with "## vX.Y.Z").
 # A version is published only if the "version" in package.json is not on npm yet,
 # so pushes that do not change the version just run the checks.
+#
+# Running the workflow by hand (Actions > Publish to npm > Run workflow) with a
+# version creates the missing GitHub release for a version that is already on npm.
 #
 # Authentication: npm trusted publishing (OIDC). This repository and this workflow
 # file (publish.yml) are registered as the trusted publisher of the package on
@@ -13,6 +18,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Create the GitHub release for this already published version (for example 2.0.1). Leave empty for a normal run.'
+        required: false
+        default: ''
+      release_target:
+        description: 'Commit to tag, only needed if the vX.Y.Z tag does not exist yet.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -26,7 +40,7 @@ jobs:
     name: Check and publish
     runs-on: ubuntu-latest
     permissions:
-      contents: write # push the release tag
+      contents: write # create the release tag and the GitHub release
       id-token: write # required for npm trusted publishing (OIDC) and provenance
 
     steps:
@@ -78,16 +92,71 @@ jobs:
           fi
 
       - name: Publish to npm
+        id: publish
         if: steps.version.outputs.published == 'false'
         run: npm publish --provenance --access public --tag "${{ steps.version.outputs.dist_tag }}"
 
-      - name: Tag the release
-        if: steps.version.outputs.published == 'false'
+      - name: Create GitHub release
+        if: steps.publish.outcome == 'success' || inputs.release_version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.version.outputs.name }}
+          JUST_PUBLISHED: ${{ steps.publish.outcome == 'success' }}
+          INPUT_VERSION: ${{ inputs.release_version }}
+          INPUT_TARGET: ${{ inputs.release_target }}
         run: |
-          TAG="v${{ steps.version.outputs.version }}"
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
-            echo "Tag $TAG already exists."
+          if [[ -n "$INPUT_VERSION" ]]; then
+            VERSION="${INPUT_VERSION#v}"
           else
-            git tag "$TAG"
-            git push origin "$TAG"
+            VERSION="${{ steps.version.outputs.version }}"
           fi
+          TAG="v$VERSION"
+
+          if ! npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
+            echo "::error::$NAME@$VERSION is not on npm, so no release is created for it."
+            exit 1
+          fi
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists."
+            exit 0
+          fi
+
+          # Pick the commit for the tag: an existing tag is reused as it is.
+          TARGET_ARGS=()
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
+            if [[ "$JUST_PUBLISHED" == "true" && -z "$INPUT_VERSION" ]]; then
+              TARGET_ARGS=(--target "$GITHUB_SHA")
+            elif [[ -n "$INPUT_TARGET" ]]; then
+              TARGET_ARGS=(--target "$INPUT_TARGET")
+            else
+              echo "::error::Tag $TAG does not exist. Run the workflow again with release_target set to the commit that was published."
+              exit 1
+            fi
+          fi
+
+          # Release notes: the CHANGELOG section of this version, up to the next "## " heading.
+          awk -v v="$VERSION" '
+            BEGIN { found = 0 }
+            /^## / {
+              if (found) exit
+              if (index($0, "## v" v) == 1) { rest = substr($0, length("## v" v) + 1); if (rest == "" || rest ~ /^[ (]/) { found = 1; next } }
+            }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [[ ! -s release-notes.md ]]; then
+            echo "No CHANGELOG section found for $TAG." > release-notes.md
+          fi
+          {
+            echo ""
+            echo "npm: https://www.npmjs.com/package/$NAME/v/$VERSION"
+            echo ""
+            echo "Full changelog: https://github.com/$GITHUB_REPOSITORY/blob/main/CHANGELOG.md"
+          } >> release-notes.md
+
+          PRERELEASE_ARGS=()
+          if [[ "$VERSION" == *-* ]]; then
+            PRERELEASE_ARGS=(--prerelease)
+          fi
+
+          gh release create "$TAG" "${TARGET_ARGS[@]}" "${PRERELEASE_ARGS[@]}" --title "$TAG" --notes-file release-notes.md
+          echo "Created release $TAG."

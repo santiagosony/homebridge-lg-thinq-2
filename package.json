@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge LG ThinQ 2",
   "name": "homebridge-lg-thinq-2",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Community-maintained continuation of homebridge-lg-thinq: a Homebridge plugin for controlling/monitoring LG ThinQ devices via the LG ThinQ platform.",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,6 +23,15 @@
   "bin": {
     "thinq": "./dist/cli.js"
   },
+  "files": [
+    "dist/**/*.js",
+    "!dist/**/*.spec.js",
+    "!dist/**/__tests__/**",
+    "homebridge-ui/",
+    "config.schema.json",
+    "CHANGELOG.md",
+    "NOTICE"
+  ],
   "scripts": {
     "build": "rimraf ./dist && tsc",
     "lint": "eslint . --max-warnings=0",
@@ -35,6 +44,7 @@
   },
   "keywords": [
     "homebridge-plugin",
+    "supports-hap",
     "homekit",
     "lg",
     "lg-thinq"
