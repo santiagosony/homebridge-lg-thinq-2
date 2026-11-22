@@ -1,5 +1,26 @@
 # Change Log
 
+## v2.0.5
+
+Fixes from [nVuln/homebridge-lg-thinq#401](https://github.com/nVuln/homebridge-lg-thinq/pull/401) by Vojtech Knyttl, which was never merged in the original repository.
+
+### Air Conditioner
+
+* The fan speed control now uses LG's own 5 speeds (HomeKit values 1 to 5) instead of a 0 to 100 percentage. With the percentage, most slider positions mapped to the speed the AC was already using, so the control seemed stuck and snapped back. Now every position selects a different speed. HomeKit speed 0 selects the lowest speed, because turning the AC off is a separate control.
+
+### Devices
+
+* The accessory name shown in HomeKit now follows the device name. Before, a device renamed in the ThinQ app or in the plugin config kept showing its old name in the Home app.
+
+### Logging and Reliability
+
+* Commands that a device rejects as not supported (ThinQ result codes `0101` and `9006`), such as the AC temperature keep-alive on some models, are now logged at debug level instead of as errors, which flooded the log every few minutes ([nVuln/homebridge-lg-thinq#391](https://github.com/nVuln/homebridge-lg-thinq/issues/391)).
+* When ThinQ does not return an MQTT certificate, the plugin now logs a clear error and retries, instead of failing with `Cannot read properties of undefined (reading 'certificatePem')`.
+
+### Dependencies
+
+* Cleared all known vulnerabilities in the published package's dependencies (`npm audit --omit=dev` reports 0, was 9): `node-forge` 1.4.3, `qs` 6.17.1, and overrides for `ws` 8.23.0, `glob` 14.0.6, and `brace-expansion` 5.0.13. `ws` is forced to 8.x for `aws-iot-device-sdk` and `mqtt`, which pin a vulnerable 7.x; the plugin connects to MQTT over TLS, not websockets, and was verified to still connect.
+
 ## v2.0.4
 
 ### Dependencies
