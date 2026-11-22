@@ -144,7 +144,6 @@ jobs:
           fi
 
           # Pick the commit for the tag: an existing tag is reused as it is.
-          TARGET_ARGS=()
           if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
             if [[ -n "$INPUT_TARGET" ]]; then
               TARGET="$INPUT_TARGET"
@@ -158,8 +157,11 @@ jobs:
               echo "::error::Tag $TAG does not exist. Run the workflow again with release_target set to the commit that was published."
               exit 1
             fi
+            # Create the tag with git: creating it through the releases API is refused
+            # for commits that change workflow files.
             echo "Tagging $TAG at $TARGET."
-            TARGET_ARGS=(--target "$TARGET")
+            git tag "$TAG" "$TARGET"
+            git push origin "refs/tags/$TAG"
           fi
 
           # Release notes: the CHANGELOG section of this version, up to the next "## " heading.
@@ -186,5 +188,5 @@ jobs:
             PRERELEASE_ARGS=(--prerelease)
           fi
 
-          gh release create "$TAG" "${TARGET_ARGS[@]}" "${PRERELEASE_ARGS[@]}" --title "$TAG" --notes-file release-notes.md
+          gh release create "$TAG" --verify-tag "${PRERELEASE_ARGS[@]}" --title "$TAG" --notes-file release-notes.md
           echo "Created release $TAG."
