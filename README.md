@@ -298,6 +298,6 @@ See [CHANGELOG.md](CHANGELOG.md) for the changes in each version.
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for attribution and third-party components.
+Licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for attribution.
 
 LG and ThinQ are trademarks of LG Electronics. This project is not affiliated with, endorsed by, or sponsored by LG Electronics. Homebridge is not affiliated with this project.

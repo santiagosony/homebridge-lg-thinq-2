@@ -1,13 +1,18 @@
 # Change Log
 
-## Unreleased
+## v2.0.7
+
+### Security
+
+* Removed jQuery 3.2.1, Bootstrap 4.0.0, and Popper.js from the plugin settings screen in the Homebridge UI. These 2017-2018 versions have known cross-site scripting vulnerabilities, and the screen only used them for two collapsible panels and basic page updates. The screen now uses plain JavaScript and the Bootstrap 5 styles that the Homebridge UI already provides, and behaves the same. The package is about 137 kB smaller.
+* The settings screen no longer breaks when the saved country or language contains unexpected characters, and the username label is linked to its field again.
 
 ### Documentation
 
 * Rewrote the README: supported devices, requirements, installation, migration, all platform and per-device options with their defaults, troubleshooting for common errors, the `thinq` command, development and release process, and credits.
 * Added a contributing guide, a security policy (private reporting through GitHub), and a code of conduct (Contributor Covenant 2.1).
 * Replaced the issue templates with issue forms for bug reports and device requests, sent questions to Discussions, and added a pull request template.
-* Added copyright lines and the third-party components of the Homebridge UI (Bootstrap, jQuery, Popper.js) to `NOTICE`.
+* Added copyright lines to `NOTICE`.
 * Removed the funding file, which pointed to the original author's donation page.
 
 ## v2.0.6

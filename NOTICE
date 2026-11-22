@@ -15,18 +15,5 @@ an AI assistant made by Anthropic.
 This project is not affiliated with, endorsed by, or sponsored by LG
 Electronics. "LG" and "ThinQ" are trademarks of LG Electronics.
 
--------------------------------------------------------------------------------
-Third-party components
--------------------------------------------------------------------------------
-
-The Homebridge UI of this plugin (homebridge-ui/public/js) includes the
-following components, each under its own license, as stated in its file header:
-
-- Bootstrap 4.0.0 (https://getbootstrap.com)
-  Copyright 2011-2018 The Bootstrap Authors. MIT License.
-- jQuery 3.2.1, slim build (https://jquery.com)
-  Copyright JS Foundation and other contributors. MIT License.
-- Popper.js (https://popper.js.org)
-  Copyright (C) Federico Zivolo 2017. MIT License.
-
-Other dependencies are installed by npm and keep their own licenses.
+Dependencies are installed by npm and keep their own licenses. No third-party
+code is bundled in this package.

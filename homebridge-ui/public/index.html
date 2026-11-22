@@ -1,13 +1,10 @@
-<script crossorigin="anonymous" src="js/jquery.slim.js"></script>
-<script crossorigin="anonymous" src="js/popper.js"></script>
-<script crossorigin="anonymous" src="js/bootstrap.js"></script>
 
 <div class="card card-body" style="display: none" id="loginForm">
     <h5>The plugin needs LG account authorization. Sign in with your LG account below.</h5>
     <hr/>
-    <div class="form-group">
-        <label for="country_language">select country / language of your account</label>
-        <select class="form-control w-100" id="country_language">
+    <div class="mb-3">
+        <label class="form-label" for="country_language">select country / language of your account</label>
+        <select class="form-select w-100" id="country_language">
             <option data-country="AE" data-language="ar-AE">United Arab Emirates/العربية</option>
             <option data-country="AE" data-language="en-AE">United Arab Emirates/English</option>
             <option data-country="AG" data-language="en-AG">Antigua and Barbuda/English</option>
@@ -245,24 +242,24 @@
         <div class="card">
             <div class="card-header" id="headingOne">
                 <h5 class="mb-0">
-                    <button aria-controls="collapseOne" aria-expanded="true" class="btn btn-link" data-target="#collapseOne" data-toggle="collapse">
+                    <button aria-controls="collapseOne" aria-expanded="true" class="btn btn-link" data-accordion-toggle="collapseOne" type="button">
                         Login with LG Account
                     </button>
                 </h5>
             </div>
 
-            <div aria-labelledby="headingOne" class="collapse show" data-parent="#accordion" id="collapseOne">
+            <div aria-labelledby="headingOne" class="collapse show" id="collapseOne">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-6">
-                            <div class="form-group">
-                                <label for="userNameInput">Username</label>
+                            <div class="mb-3">
+                                <label class="form-label" for="usernameInput">Username</label>
                                 <input class="form-control" id="usernameInput" required type="text">
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="form-group">
-                                <label for="passwordInput">Password</label>
+                            <div class="mb-3">
+                                <label class="form-label" for="passwordInput">Password</label>
                                 <input class="form-control" id="passwordInput" required type="password">
                             </div>
                         </div>
@@ -277,7 +274,7 @@
                         </div>
                     </div>
 
-                    <div class="text-center">
+                    <div class="text-center mt-3">
                         <button class="btn btn-primary btn-login" id="getTokenButton" type="button">Get Token</button>
                     </div>
                 </div>
@@ -286,13 +283,12 @@
         <div class="card">
             <div class="card-header" id="headingTwo">
                 <h5 class="mb-0">
-                    <button aria-controls="collapseTwo" aria-expanded="false" class="btn btn-link collapsed" data-target="#collapseTwo"
-                            data-toggle="collapse">
+                    <button aria-controls="collapseTwo" aria-expanded="false" class="btn btn-link collapsed" data-accordion-toggle="collapseTwo" type="button">
                         Other login methods
                     </button>
                 </h5>
             </div>
-            <div aria-labelledby="headingTwo" class="collapse" data-parent="#accordion" id="collapseTwo">
+            <div aria-labelledby="headingTwo" class="collapse" id="collapseTwo">
                 <div class="card-body">
                     <p>Use the <a href="https://github.com/nVuln/homebridge-lg-thinq/wiki/Plugin-Authorization-Setting"><b>Plugin Authorization Setting</b></a> guide for other login methods.</p>
                 </div>
@@ -307,30 +303,71 @@
 
 <script>
   const homebridge = window.homebridge;
-  const $ = jQuery = window.jQuery;
   let configForm;
+
+  const byId = (id) => document.getElementById(id);
+
+  function showElement(element) {
+    if (element) {
+      element.style.display = '';
+    }
+  }
+
+  function hideElement(element) {
+    if (element) {
+      element.style.display = 'none';
+    }
+  }
+
+  // Accordion of login methods: only one panel open at a time.
+  function setupAccordion() {
+    const toggles = document.querySelectorAll('[data-accordion-toggle]');
+    toggles.forEach((toggle) => {
+      toggle.addEventListener('click', () => {
+        const panel = byId(toggle.dataset.accordionToggle);
+        const willOpen = !panel.classList.contains('show');
+        toggles.forEach((other) => {
+          byId(other.dataset.accordionToggle).classList.remove('show');
+          other.classList.add('collapsed');
+          other.setAttribute('aria-expanded', 'false');
+        });
+        if (willOpen) {
+          panel.classList.add('show');
+          toggle.classList.remove('collapsed');
+          toggle.setAttribute('aria-expanded', 'true');
+        }
+        homebridge.fixScrollHeight();
+      });
+    });
+  }
+
+  function findCountryLanguageOption(country, language) {
+    return Array.from(byId('country_language').options)
+      .find(option => option.dataset.country === country && option.dataset.language === language);
+  }
 
   function requestErrorMessage(error, fallback) {
     return error?.error || error?.message || fallback;
   }
 
   function setLoginButtonLoading(btn, label) {
-    btn.prop('disabled', true).html(
-      '<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>' + label
-    );
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
+    btn.append(label);
   }
 
   function resetLoginButton(btn) {
-    btn.prop('disabled', false).text('Get Token');
+    btn.disabled = false;
+    btn.textContent = 'Get Token';
   }
 
   function showSaveNotice() {
-    $('#saveNotice').show();
+    showElement(byId('saveNotice'));
     homebridge.fixScrollHeight();
   }
 
   function hideSaveNotice() {
-    $('#saveNotice').hide();
+    hideElement(byId('saveNotice'));
     homebridge.fixScrollHeight();
   }
 
@@ -575,12 +612,12 @@
       configuration.devices = configuration.devices.map(normalizeDevice);
     }
 
-    $('#usernameInput').val(configuration.username);
-    $('#passwordInput').val(configuration.password);
-    $('#refresh_token').val(configuration.refresh_token);
-    $('#rememberUsername').prop('checked', configuration.username && configuration.password);
+    byId('usernameInput').value = configuration.username || '';
+    byId('passwordInput').value = configuration.password || '';
+    byId('rememberUsername').checked = Boolean(configuration.username && configuration.password);
 
-    $('#configForm, #loginForm').hide();
+    hideElement(byId('configForm'));
+    hideElement(byId('loginForm'));
 
     try {
       if (configuration.refresh_token) {
@@ -592,7 +629,7 @@
         }
       }
       else {
-        $('#loginForm').show();
+        showElement(byId('loginForm'));
       }
     }
     catch (error) {
@@ -616,13 +653,13 @@
       }
       configuration = pluginConfig[0];
 
-      let option_selected = $('#country_language option[data-country="'+configuration.country+'"][data-language="'+configuration.language+'"]');
-      if (!option_selected.length) {
-        option_selected = $('#country_language option[data-country="US"][data-language="en-US"]');
+      let optionSelected = findCountryLanguageOption(configuration.country, configuration.language);
+      if (!optionSelected) {
+        optionSelected = findCountryLanguageOption('US', 'en-US');
         configuration.country = 'US';
         configuration.language = 'en-US';
       }
-      option_selected.prop('selected', true);
+      optionSelected.selected = true;
 
       await init(configuration);
     }
@@ -633,20 +670,22 @@
       homebridge.hideSpinner();
     }
 
-    $('#country_language').on('change', async function () {
-      const selected = $(this).find(':selected');
-      configuration.country = $(selected).data('country');
-      configuration.language = $(selected).data('language');
+    setupAccordion();
+
+    byId('country_language').addEventListener('change', async (e) => {
+      const selected = e.currentTarget.selectedOptions[0];
+      configuration.country = selected.dataset.country;
+      configuration.language = selected.dataset.language;
       await homebridge.updatePluginConfig([configuration]);
     });
 
-    $('.btn-login').on('click', async function (e) {
+    byId('getTokenButton').addEventListener('click', async (e) => {
       e.preventDefault();
-      var username = $('#usernameInput').val(),
-        password = $('#passwordInput').val();
+      const username = byId('usernameInput').value;
+      const password = byId('passwordInput').value;
 
       if (username && password) {
-        var btn = $(this);
+        const btn = e.currentTarget;
         setLoginButtonLoading(btn, 'Logging in');
 
         try {
@@ -663,7 +702,7 @@
           }
           else {
             configuration.refresh_token = data.token;
-            if ($('#rememberUsername:checked').length) {
+            if (byId('rememberUsername').checked) {
               configuration.username = username;
               configuration.password = password;
             }
@@ -676,9 +715,10 @@
             homebridge.enableSaveButton();
 
             await renderConfigForm(configuration, { hideDevices: true });
-            $('#loginForm').hide();
+            hideElement(byId('loginForm'));
             showSaveNotice();
-            btn.prop('disabled', true).text('Get Token');
+            btn.disabled = true;
+            btn.textContent = 'Get Token';
           }
         }
         catch (error) {
@@ -689,7 +729,7 @@
       else {
         homebridge.toast.error('A username and password must be provided.', 'Error');
       }
-    })
+    });
 
   })();
 
