@@ -9,6 +9,7 @@
   <a href="https://www.npmjs.com/package/homebridge-lg-thinq-2"><img src="https://img.shields.io/npm/dt/homebridge-lg-thinq-2" alt="npm downloads"></a>
   <a href="https://github.com/santiagosony/homebridge-lg-thinq-2/actions/workflows/build.yml"><img src="https://github.com/santiagosony/homebridge-lg-thinq-2/actions/workflows/build.yml/badge.svg" alt="CI status"></a>
   <img src="https://img.shields.io/node/v/homebridge-lg-thinq-2" alt="Node.js version">
+  <a href="https://socket.dev/npm/package/homebridge-lg-thinq-2"><img src="https://socket.dev/api/badge/npm/package/homebridge-lg-thinq-2" alt="Socket security score"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/santiagosony/homebridge-lg-thinq-2" alt="License: Apache-2.0"></a>
 </p>
 
