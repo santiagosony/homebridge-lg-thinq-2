@@ -1,6 +1,9 @@
 Homebridge LG ThinQ 2
 https://github.com/santiagosony/homebridge-lg-thinq-2
 
+Copyright 2021-2026 nVuln and the homebridge-lg-thinq contributors
+Copyright 2026 santiagosony and the homebridge-lg-thinq-2 contributors
+
 This product is a modified version of "homebridge-lg-thinq"
 (https://github.com/nVuln/homebridge-lg-thinq), originally created by nVuln
 and its contributors, and distributed under the Apache License, Version 2.0.
@@ -10,4 +13,20 @@ git commit history. Development of these modifications is assisted by Claude,
 an AI assistant made by Anthropic.
 
 This project is not affiliated with, endorsed by, or sponsored by LG
-Electronics. "LG" and "ThinQ" are trademarks of their respective owners.
+Electronics. "LG" and "ThinQ" are trademarks of LG Electronics.
+
+-------------------------------------------------------------------------------
+Third-party components
+-------------------------------------------------------------------------------
+
+The Homebridge UI of this plugin (homebridge-ui/public/js) includes the
+following components, each under its own license, as stated in its file header:
+
+- Bootstrap 4.0.0 (https://getbootstrap.com)
+  Copyright 2011-2018 The Bootstrap Authors. MIT License.
+- jQuery 3.2.1, slim build (https://jquery.com)
+  Copyright JS Foundation and other contributors. MIT License.
+- Popper.js (https://popper.js.org)
+  Copyright (C) Federico Zivolo 2017. MIT License.
+
+Other dependencies are installed by npm and keep their own licenses.

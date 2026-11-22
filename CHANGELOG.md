@@ -1,5 +1,15 @@
 # Change Log
 
+## Unreleased
+
+### Documentation
+
+* Rewrote the README: supported devices, requirements, installation, migration, all platform and per-device options with their defaults, troubleshooting for common errors, the `thinq` command, development and release process, and credits.
+* Added a contributing guide, a security policy (private reporting through GitHub), and a code of conduct (Contributor Covenant 2.1).
+* Replaced the issue templates with issue forms for bug reports and device requests, sent questions to Discussions, and added a pull request template.
+* Added copyright lines and the third-party components of the Homebridge UI (Bootstrap, jQuery, Popper.js) to `NOTICE`.
+* Removed the funding file, which pointed to the original author's donation page.
+
 ## v2.0.6
 
 ### Reliability

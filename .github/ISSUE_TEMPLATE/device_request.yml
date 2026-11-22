@@ -1,0 +1,55 @@
+name: Device or feature request
+description: Ask for support for a device, or for a new feature of a supported device.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        To add a device, its data from the LG API is needed. Turn on Homebridge debug mode and restart Homebridge. For each device, the log shows a line with its name followed by a line with its data in JSON:
+
+        ```
+        [LGThinQ] Device [Dryer]:  xxx-xxx-xxx: Dryer (DRYER xxxxxxxx)
+        [LGThinQ] {"deviceId":"xxx-xxx-xxx","alias":"Dryer","deviceType":202, ...}
+        ```
+
+        Unsupported devices are also listed as `Device not supported: ...`.
+
+        **Remove serial numbers, refresh tokens, and other personal data** before you paste it.
+  - type: textarea
+    id: request
+    attributes:
+      label: What would you like?
+      description: The device, and what you would like to see or control in Apple Home.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device type and model
+      placeholder: Dryer, RV13B6AM_D
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: ThinQ platform
+      description: Shown in the device data as `platformType`.
+      options:
+        - thinq2
+        - thinq1
+        - I don't know
+    validations:
+      required: true
+  - type: textarea
+    id: device-data
+    attributes:
+      label: Device data from the debug log
+      description: The JSON line that follows `Device [name]:` for this device.
+      render: json
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      placeholder: "2.0.6"

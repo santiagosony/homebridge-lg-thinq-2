@@ -1,0 +1,82 @@
+name: Bug report
+description: Report something that does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Before you continue:
+        - Update to the [latest version](https://www.npmjs.com/package/homebridge-lg-thinq-2) and check the [troubleshooting guide](https://github.com/santiagosony/homebridge-lg-thinq-2#troubleshooting).
+        - Search the [existing issues](https://github.com/santiagosony/homebridge-lg-thinq-2/issues).
+        - **Remove refresh tokens, passwords, and other personal data** from everything you paste.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Homebridge logs
+      description: Turn on Homebridge debug mode, reproduce the problem, and paste the related log lines.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Plugin configuration
+      description: The `LGThinQ` platform section of your config.json, without the refresh token, username, or password.
+      render: json
+  - type: input
+    id: device
+    attributes:
+      label: Device type and model
+      placeholder: Air Conditioner, RAC_056905_WW
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      placeholder: "2.0.6"
+    validations:
+      required: true
+  - type: input
+    id: homebridge-version
+    attributes:
+      label: Homebridge version
+      placeholder: "2.5.0"
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      placeholder: "24.11.0"
+    validations:
+      required: true
+  - type: input
+    id: account-region
+    attributes:
+      label: LG account country and language
+      placeholder: US, en-US
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Raspberry Pi OS / Debian / Ubuntu
+        - Docker
+        - macOS
+        - Windows
+        - Other
