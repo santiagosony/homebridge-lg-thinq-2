@@ -1,0 +1,107 @@
+name: Publish to npm
+
+# Publishes the package to npm when a new version reaches main.
+# A version is published only if the "version" in package.json is not on npm yet,
+# so pushes that do not change the version just run the checks.
+#
+# Authentication (one of):
+#   - Repository secret NPM_TOKEN: an npm granular access token with publish rights.
+#   - npm trusted publishing (OIDC): configure this repository and workflow file
+#     (publish.yml) as a trusted publisher on npmjs.com, then set the repository
+#     variable NPM_TRUSTED_PUBLISHING to "true". No token is needed.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Check and publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the release tag
+      id-token: write # npm provenance and trusted publishing
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test --silent
+        env:
+          CI: true
+
+      - name: Check whether this version is already published
+        id: version
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "dist_tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+          if npm view "$NAME@$VERSION" version > /dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$NAME@$VERSION is already on npm. Bump the version in package.json to publish a new release."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "$NAME@$VERSION is not on npm yet and will be published."
+          fi
+
+      - name: Check npm credentials
+        id: auth
+        if: steps.version.outputs.published == 'false'
+        env:
+          HAS_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
+          TRUSTED: ${{ vars.NPM_TRUSTED_PUBLISHING == 'true' }}
+        run: |
+          if [[ "$HAS_TOKEN" == "true" || "$TRUSTED" == "true" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping npm publish: add the NPM_TOKEN repository secret or enable trusted publishing (see the comments at the top of publish.yml)."
+          fi
+
+      - name: Publish to npm
+        if: steps.version.outputs.published == 'false' && steps.auth.outputs.ready == 'true'
+        run: npm publish --provenance --access public --tag "${{ steps.version.outputs.dist_tag }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Tag the release
+        if: steps.version.outputs.published == 'false' && steps.auth.outputs.ready == 'true'
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
+            echo "Tag $TAG already exists."
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
