@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.0.4
+
+### Dependencies
+
+* Raised the minimum axios version to 1.21.1 (was 1.16.0). axios versions before 1.16.1 send HTTPS requests to an HTTPS proxy as plain requests instead of opening a `CONNECT` tunnel, so proxies reject them (HTTP 405). With 1.21.1, requests through an `HTTPS_PROXY` work. Installs from npm already resolved to a newer axios, so this mainly guarantees the plugin never runs with an affected version.
+* The axios update also brings patched `follow-redirects` and `form-data` versions, and lowers the dependency issues reported by `npm audit` for the published package from 12 to 9 (high: from 6 to 3). The remaining ones come from `aws-iot-device-sdk` (through `mqtt` and `glob`).
+
 ## v2.0.3
 
 ### Login
