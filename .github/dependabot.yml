@@ -1,0 +1,26 @@
+# Opens pull requests to keep dependencies and GitHub Actions up to date.
+# Security updates are opened as soon as an advisory is published, independently of this schedule.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Build and test tools in one pull request; they are not part of the published package.
+      development-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+    labels: [dependencies]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      github-actions:
+        patterns: ['*']
+    labels: [dependencies]

@@ -1,5 +1,12 @@
 # Change Log
 
+## Unreleased
+
+### Development
+
+* Hardened the GitHub Actions workflows: the CI workflow now has a read-only token, actions are pinned to commit SHAs, dependencies are installed without running their install scripts (`npm ci --ignore-scripts`), jobs have time limits, and newer pushes to a pull request cancel older checks.
+* Added Dependabot version updates for npm and GitHub Actions (weekly, development dependencies grouped), and CodeQL code scanning for JavaScript and TypeScript.
+
 ## v2.0.12
 
 ### Homebridge UI

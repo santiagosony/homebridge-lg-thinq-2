@@ -1,11 +1,23 @@
 name: CI - Build, Lint, Test
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+
+# Read-only token: this workflow only checks the code.
+permissions:
+  contents: read
+
+# A newer push to the same pull request cancels the checks of the previous one.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     name: Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       fail-fast: false
@@ -13,17 +25,21 @@ jobs:
         node-version: [22.x, 24.x, 26.x]
 
     steps:
+      # Actions are pinned to commit SHAs; Dependabot keeps them up to date.
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js (with npm cache)
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      # --ignore-scripts: dependencies cannot run install scripts in CI.
       - name: Install dependencies (npm ci)
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Lint
         run: npm run lint
