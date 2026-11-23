@@ -170,12 +170,14 @@ describe('Auth', () => {
   });
 
   test('explains how to unlock an account when LG locks sign-in', async () => {
+    // Made-up account, in the format LG uses: "Need Sign-In Unlock:<code>:<masked account id>:<flag>".
+    const maskedAccount = 'tes*****@example.com';
     const lockedAccountResponse = {
       response: {
         status: 400,
         data: {
           error: {
-            message: 'Need Sign-In Unlock:420:san*********@gmail.com:Y',
+            message: `Need Sign-In Unlock:420:${maskedAccount}:Y`,
           },
         },
       },
@@ -185,17 +187,28 @@ describe('Auth', () => {
       .mockResolvedValueOnce({ data: { signature: 'sig', tStamp: '1', encrypted_pw: 'pw' } }) // preLogin
       .mockRejectedValueOnce(lockedAccountResponse);
 
-    const error = await auth.loginStep2('user@example.com', 'hash').catch(err => err);
+    const error = await auth.loginStep2('test@example.com', 'hash').catch(err => err);
 
     expect(error).toBeInstanceOf(AuthenticationError);
     expect(error.message).toBe(SIGN_IN_UNLOCK_MESSAGE);
-    expect(error.message).not.toContain('@gmail.com');
+    // The account identifier that LG sends must not reach the UI or the log.
+    expect(error.message).not.toContain(maskedAccount);
+    expect(error.message).not.toContain('@');
   });
 
-  test('recognizes LG sign-in unlock messages', () => {
-    expect(isSignInUnlockRequired('Need Sign-In Unlock:420:san*********@gmail.com:Y')).toBe(true);
-    expect(isSignInUnlockRequired('need signin unlock')).toBe(true);
+  test('recognizes LG sign-in unlock messages by their prefix', () => {
+    expect(isSignInUnlockRequired('Need Sign-In Unlock:420:tes*****@example.com:Y')).toBe(true);
+    expect(isSignInUnlockRequired('Need Sign-In Unlock')).toBe(true);
+    expect(isSignInUnlockRequired('need signin unlock:1:x:N')).toBe(true);
+    expect(isSignInUnlockRequired('  Need Sign In Unlock: 420')).toBe(true);
+  });
+
+  test('does not treat other LG messages as a sign-in lock', () => {
     expect(isSignInUnlockRequired('Wrong User ID')).toBe(false);
+    expect(isSignInUnlockRequired('Your account needs sign-in unlock soon')).toBe(false);
+    expect(isSignInUnlockRequired('Need Sign-In Unlocked:420')).toBe(false);
+    expect(isSignInUnlockRequired('')).toBe(false);
+    expect(isSignInUnlockRequired(null)).toBe(false);
     expect(isSignInUnlockRequired(undefined)).toBe(false);
   });
 

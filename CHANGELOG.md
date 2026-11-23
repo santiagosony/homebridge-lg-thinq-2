@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.0.11
+
+### Login
+
+* The LG sign-in lock message is now recognized only by the prefix LG uses (`Need Sign-In Unlock`, optionally followed by colon-separated fields), instead of anywhere in any message. The fields after the prefix, which identify the account, are never shown or logged.
+* The tests now use made-up account data only.
+
 ## v2.0.10
 
 ### Homebridge UI

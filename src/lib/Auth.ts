@@ -65,10 +65,14 @@ export const SIGN_IN_UNLOCK_MESSAGE = 'LG has locked sign-in for this account an
   + 'the verification LG asks for, then try again. You can also get a refresh token with the "thinq auth" '
   + 'command, which uses the LG sign-in page.';
 
-// LG answers sign-ins to a locked account with a message like
-// "Need Sign-In Unlock:420:<masked email>:Y".
+// LG answers a sign-in to a locked account with an error message that starts with
+// "Need Sign-In Unlock", followed by colon-separated fields:
+// "Need Sign-In Unlock:<code>:<masked account id>:<flag>". Only the prefix is matched,
+// and the fields are never shown, because one of them identifies the account.
+const SIGN_IN_UNLOCK_PATTERN = /^\s*need\s+sign[\s-]?in\s+unlock\s*(?::|$)/i;
+
 export function isSignInUnlockRequired(message: string | null | undefined): boolean {
-  return typeof message === 'string' && /sign-?in\s*unlock/i.test(message);
+  return typeof message === 'string' && SIGN_IN_UNLOCK_PATTERN.test(message);
 }
 
 function authError(context: string, err: unknown): AuthenticationError {
