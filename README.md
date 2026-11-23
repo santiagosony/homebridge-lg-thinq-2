@@ -218,6 +218,7 @@ Turn on Homebridge **debug mode** (Homebridge UI → Settings) to see detailed l
 | --- | --- |
 | `LG pre-login failed: Request failed with status code 403` | LG rejected the login request. Update to version `2.0.3` or later. |
 | `Request failed with status code 429` or result code `9012` | LG received too many requests. Update to version `2.0.6` or later, and do not set a low `refresh_interval`. |
+| `LG has locked sign-in for this account` (LG message `Need Sign-In Unlock`) | LG locked sign-in, usually after several failed sign-ins or a sign-in from a new device. Sign in to the LG ThinQ app or to your LG account on the LG website and complete the verification LG asks for, then try again. Or get a refresh token with [`thinq auth`](#command-line-tool), which uses LG's sign-in page. |
 | `Missing required config parameter.` | Set `country`, `language`, and either a `refresh_token` or `username` and `password`. |
 | `The plugin requires a Node.js version of ...` | Update the plugin. Node.js 26 also needs Homebridge `2.3.0` or later. |
 | A device is missing | Check that it works in the LG ThinQ app. Legacy devices need `"thinq1": true`. If it is still missing, [request it](https://github.com/santiagosony/homebridge-lg-thinq-2/issues/new/choose). |

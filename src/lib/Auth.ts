@@ -59,6 +59,18 @@ export function authErrorMessage(err: unknown, fallback: string): string {
     || fallback;
 }
 
+export const SIGN_IN_UNLOCK_MESSAGE = 'LG has locked sign-in for this account and asks to unlock it '
+  + '(LG message: "Need Sign-In Unlock"). This usually happens after several failed sign-ins or a sign-in '
+  + 'from a new device. Sign in to the LG ThinQ app or to your LG account on the LG website and complete '
+  + 'the verification LG asks for, then try again. You can also get a refresh token with the "thinq auth" '
+  + 'command, which uses the LG sign-in page.';
+
+// LG answers sign-ins to a locked account with a message like
+// "Need Sign-In Unlock:420:<masked email>:Y".
+export function isSignInUnlockRequired(message: string | null | undefined): boolean {
+  return typeof message === 'string' && /sign-?in\s*unlock/i.test(message);
+}
+
 function authError(context: string, err: unknown): AuthenticationError {
   const message = authErrorMessage(err, 'Request failed.');
   const error = new AuthenticationError(`${context}: ${message}`);
@@ -143,6 +155,10 @@ export class Auth {
 
       if (code === 'MS.001.03') {
         throw new AuthenticationError('Your account was already used to registered in ' + message + '.');
+      }
+
+      if (isSignInUnlockRequired(message)) {
+        throw new AuthenticationError(SIGN_IN_UNLOCK_MESSAGE);
       }
 
       throw new AuthenticationError(message);

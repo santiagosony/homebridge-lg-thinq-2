@@ -1,6 +1,6 @@
 /* eslint-disable dot-notation */
 /* eslint-disable @typescript-eslint/no-require-imports */
-import { Auth, authErrorCode, authErrorMessage } from './Auth.js';
+import { Auth, authErrorCode, authErrorMessage, isSignInUnlockRequired, SIGN_IN_UNLOCK_MESSAGE } from './Auth.js';
 import { Gateway } from './Gateway.js';
 import { Session } from './Session.js';
 import { Logger } from 'homebridge';
@@ -167,6 +167,36 @@ describe('Auth', () => {
       .mockRejectedValueOnce(mockErrorResponse);
 
     await expect(auth.loginStep2('testUser', 'mockEncryptedPassword')).rejects.toThrow(AuthenticationError);
+  });
+
+  test('explains how to unlock an account when LG locks sign-in', async () => {
+    const lockedAccountResponse = {
+      response: {
+        status: 400,
+        data: {
+          error: {
+            message: 'Need Sign-In Unlock:420:san*********@gmail.com:Y',
+          },
+        },
+      },
+    };
+    const requestClient = require('./request').requestClient;
+    jest.spyOn(requestClient, 'post')
+      .mockResolvedValueOnce({ data: { signature: 'sig', tStamp: '1', encrypted_pw: 'pw' } }) // preLogin
+      .mockRejectedValueOnce(lockedAccountResponse);
+
+    const error = await auth.loginStep2('user@example.com', 'hash').catch(err => err);
+
+    expect(error).toBeInstanceOf(AuthenticationError);
+    expect(error.message).toBe(SIGN_IN_UNLOCK_MESSAGE);
+    expect(error.message).not.toContain('@gmail.com');
+  });
+
+  test('recognizes LG sign-in unlock messages', () => {
+    expect(isSignInUnlockRequired('Need Sign-In Unlock:420:san*********@gmail.com:Y')).toBe(true);
+    expect(isSignInUnlockRequired('need signin unlock')).toBe(true);
+    expect(isSignInUnlockRequired('Wrong User ID')).toBe(false);
+    expect(isSignInUnlockRequired(undefined)).toBe(false);
   });
 
   test('should wrap login request failures without response data', async () => {

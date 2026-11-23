@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.0.9
+
+### Login
+
+* When LG locks sign-in for an account (LG message `Need Sign-In Unlock`, usually after several failed sign-ins or a sign-in from a new device), the Homebridge UI, the `thinq` command, and the log now explain what happened and how to unlock it, instead of showing LG's raw message. Documented the error in the README troubleshooting table.
+
 ## v2.0.8
 
 ### Security
