@@ -46,6 +46,14 @@ describe('MQTT certificate helpers', () => {
     expect(new URL(LG_ROOT_CA_URL).protocol).toBe('https:');
   });
 
+  test('does not treat hosts that only look like the MQTT hosts as AWS or LG', () => {
+    // Every "." of the real host names replaced by another character.
+    expect(rootCaUrlForMqttHost('abc-atsXiotYus-east-1ZamazonawsQcom')).toBe(LEGACY_ROOT_CA_URL);
+    expect(rootCaUrlForMqttHost('abcXiotYruicZlgthinqQcom')).toBe(LEGACY_ROOT_CA_URL);
+    expect(rootCaUrlForMqttHost('abc-ats.iot.us-east-1.amazonaws.com.example.net')).toBe(LEGACY_ROOT_CA_URL);
+    expect(rootCaUrlForMqttHost('abc.iot.ruic.lgthinq.com.example.net')).toBe(LEGACY_ROOT_CA_URL);
+  });
+
   test('strips CSR PEM envelope and line breaks for the LG certificate request body', () => {
     const csr = [
       '-----BEGIN CERTIFICATE REQUEST-----',

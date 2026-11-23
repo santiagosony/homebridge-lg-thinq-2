@@ -66,12 +66,16 @@ export type MqttPreparedConnection = {
   subscriptions: string[];
 };
 
+// Dots are escaped: an unescaped "." matches any character, so other hosts could match.
+const AWS_ATS_MQTT_HOST = /^[^.]+-ats\.iot\.[^.]+\.amazonaws\.com$/;
+const LG_MQTT_HOST = /^[^.]+\.iot\.ruic\.lgthinq\.com$/;
+
 export function rootCaUrlForMqttHost(hostname: string): string {
-  if (hostname.match(/^([^.]+)-ats.iot.([^.]+).amazonaws.com$/g)) {
+  if (AWS_ATS_MQTT_HOST.test(hostname)) {
     return ATS_ROOT_CA_URL;
   }
 
-  if (hostname.match(/^([^.]+).iot.ruic.lgthinq.com$/g)) {
+  if (LG_MQTT_HOST.test(hostname)) {
     return LG_ROOT_CA_URL;
   }
 

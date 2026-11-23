@@ -1,6 +1,11 @@
 # Change Log
 
-## Unreleased
+## v2.0.13
+
+### Security
+
+* Fixed the host name checks that pick the root certificate for the MQTT connection: the dots in the patterns were not escaped, so they matched any character and host names that only looked like AWS IoT or LG hosts. Found by CodeQL.
+* When migrating cache files from older versions, each file is now checked and read through the same open file, so it cannot be replaced in between. Found by CodeQL.
 
 ### Development
 

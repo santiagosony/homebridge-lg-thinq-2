@@ -3,6 +3,20 @@ import Fs from 'fs/promises';
 import Path from 'path';
 import Crypto from 'crypto';
 
+/** Reads a file as UTF-8, or returns null if it is missing or not a regular file. */
+async function readRegularFile(path: string): Promise<string | null> {
+  const handle = await Fs.open(path, 'r').catch(() => null);
+  if (!handle) {
+    return null;
+  }
+  try {
+    const stat = await handle.stat();
+    return stat.isFile() ? await handle.readFile({ encoding: 'utf8' }) : null;
+  } finally {
+    await handle.close();
+  }
+}
+
 export function isPersistCacheMiss(value: unknown): value is null | undefined {
   return value === null || value === undefined;
 }
@@ -63,15 +77,15 @@ export default class Persist {
           continue;
         }
         const p = Path.join(this.dir, f);
-        const stat = await Fs.stat(p).catch(() => null);
-        if (!stat || !stat.isFile()) {
-          continue;
-        }
         if (/^[a-f0-9]{64}$/.test(f)) {
           continue;
         }
         try {
-          const raw = await Fs.readFile(p, { encoding: 'utf8' });
+          // Check and read the same open file, so it cannot be replaced in between.
+          const raw = await readRegularFile(p);
+          if (raw === null) {
+            continue;
+          }
           const parsed = JSON.parse(raw);
           const key = parsed && typeof parsed === 'object' && parsed.key ? parsed.key : f;
           const datum = { key, value: parsed && parsed.key ? parsed.value ?? parsed : parsed, ttl: undefined };
