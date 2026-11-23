@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.0.10
+
+### Homebridge UI
+
+* Fixed the "Device Settings" section of each device showing only its title, with no options. The settings for each device type (washer and dryer, air conditioner, refrigerator, air purifier, dishwasher) are shown only when the device `type` matches, but `type` was not declared in `config.schema.json`, so the Homebridge UI dropped it and no settings ever showed. Verified in Homebridge UI 5.30.1 that each device shows its own settings and that changes are saved. Added a test that checks every device field used by the settings conditions is declared.
+
 ## v2.0.9
 
 ### Login

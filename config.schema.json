@@ -89,6 +89,10 @@
             "title": "Serial Number (optional)",
             "type": "string"
           },
+          "type": {
+            "title": "Device Type",
+            "type": "string"
+          },
           "dishwasher_trigger": {
             "title": "Enable program finished trigger?",
             "type": "boolean"
