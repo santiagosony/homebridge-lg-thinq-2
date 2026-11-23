@@ -21,7 +21,7 @@
   },
   "main": "dist/index.js",
   "bin": {
-    "thinq": "./dist/cli.js"
+    "thinq": "dist/cli.js"
   },
   "files": [
     "dist/**/*.js",
