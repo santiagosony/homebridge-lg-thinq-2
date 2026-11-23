@@ -15,6 +15,7 @@ import {
   heaterCoolerCharacteristicUpdateFromState,
   humiditySensorCharacteristicUpdateFromState,
   isSwingModeEnabled,
+  modeButtonsFromConfig,
   modelFeatureToggleValue,
   readAirConditionerState,
   swingCommandsForMode,
@@ -576,5 +577,33 @@ describe('AirConditioner command mapping', () => {
 
     expect(thresholdTemperatureUpdateFromState(24, 0, currentHeaterCoolerState)).toBeNull();
     expect(thresholdTemperatureUpdateFromState(24, 1, currentHeaterCoolerState)).toBeNull();
+  });
+});
+
+describe('modeButtonsFromConfig', () => {
+  test('keeps buttons with a name and a mode, accepting the mode as a number or a string', () => {
+    expect(modeButtonsFromConfig([
+      { name: 'Dry mode', op_mode: 1 },
+      { name: ' Fan mode ', op_mode: '2' },
+    ])).toEqual([
+      { name: 'Dry mode', opMode: 1 },
+      { name: 'Fan mode', opMode: 2 },
+    ]);
+  });
+
+  test('skips the empty row the settings form adds, and incomplete rows', () => {
+    expect(modeButtonsFromConfig([
+      {},
+      { name: '', op_mode: 0 },
+      { name: 'No mode' },
+      { name: 'Empty mode', op_mode: '' },
+      { name: 'Bad mode', op_mode: 'cool' },
+      null,
+      { name: 'Cool', op_mode: 0 },
+    ])).toEqual([{ name: 'Cool', opMode: 0 }]);
+  });
+
+  test('returns no buttons when the setting is missing', () => {
+    expect(modeButtonsFromConfig(undefined)).toEqual([]);
   });
 });

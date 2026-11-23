@@ -1,5 +1,18 @@
 # Change Log
 
+## v2.0.19
+
+### Homebridge UI
+
+* Cleaner device settings: one heading per device type ("Washer and dryer options", "Air conditioner options", and so on) with a separator line, instead of a "Device Settings" title plus a "specific settings" title and a description.
+* Every option has a short name and a one-line explanation, for example **Program finished sensor** instead of "Enable program finished trigger?".
+* Air conditioner: the three lists come first and show the mode in use (both heating and cooling, both swing directions, Celsius) instead of "None". The **Display light switch** option, which was missing from the form, is shown.
+* Air conditioner **Mode buttons**: explained, with a list of modes (Cool, Dry, Fan, Heat, Air clean, Auto) instead of a number field. The empty row the form always shows is not saved.
+
+### Air conditioner
+
+* Mode buttons without a name or a mode are skipped, so an empty row in the settings no longer creates an unnamed switch.
+
 ## v2.0.18
 
 ### Homebridge UI

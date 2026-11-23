@@ -100,28 +100,32 @@
             "type": "string"
           },
           "dishwasher_trigger": {
-            "title": "Enable program finished trigger?",
-            "type": "boolean"
+            "title": "Program finished sensor",
+            "type": "boolean",
+            "description": "Adds an occupancy sensor that turns on when a program finishes. Use it in a HomeKit automation, for example to get a notification."
           },
           "washer_tub_clean": {
-            "title": "Enable Tub Clean Event",
-            "type": "boolean"
+            "title": "Tub clean reminder",
+            "type": "boolean",
+            "description": "Adds an occupancy sensor that turns on when the washer recommends a tub clean."
           },
           "washer_trigger": {
-            "title": "Enable program finished trigger?",
-            "type": "boolean"
+            "title": "Program finished sensor",
+            "type": "boolean",
+            "description": "Adds an occupancy sensor that turns on when a program finishes. Use it in a HomeKit automation, for example to get a notification."
           },
           "washer_door_lock": {
-            "title": "Enable door lock status",
-            "type": "boolean"
+            "title": "Door lock status",
+            "type": "boolean",
+            "description": "Shows whether the door is locked, as a lock in HomeKit. Only for models that report it."
           },
           "ac_air_quality": {
-            "title": "Enable Air Quality",
-            "description": "if your device supported Air Quality sensor",
+            "title": "Air quality sensor",
+            "description": "Adds an air quality sensor, if the air conditioner has one.",
             "type": "boolean"
           },
           "ac_mode": {
-            "title": "AC Mode (Heating or Cooling or Both)",
+            "title": "Modes shown in HomeKit",
             "type": "string",
             "oneOf": [
               {
@@ -145,7 +149,7 @@
             ]
           },
           "ac_swing_mode": {
-            "title": "Swing Mode (vertical or horizontal)",
+            "title": "Swing control",
             "type": "string",
             "oneOf": [
               {
@@ -175,50 +179,98 @@
             ]
           },
           "ac_temperature_sensor": {
-            "title": "Current temperature as sensor",
-            "type": "boolean"
+            "title": "Temperature sensor",
+            "type": "boolean",
+            "description": "Adds the current room temperature as a separate sensor."
           },
           "ac_humidity_sensor": {
-            "title": "Enable humidity sensor",
-            "type": "boolean"
+            "title": "Humidity sensor",
+            "type": "boolean",
+            "description": "Adds a humidity sensor, if the air conditioner reports humidity."
           },
           "ac_led_control": {
-            "title": "Enable led panel control",
-            "type": "boolean"
+            "title": "Display light switch",
+            "type": "boolean",
+            "description": "Adds a switch to turn the display light on and off."
           },
           "ac_fan_control": {
-            "title": "Enable separate fan control",
-            "type": "boolean"
+            "title": "Separate fan control",
+            "type": "boolean",
+            "description": "Adds a fan to control the fan speed separately from the air conditioner."
           },
           "ac_jet_control": {
-            "title": "Enable separate jet control",
-            "type": "boolean"
+            "title": "Jet mode switch",
+            "type": "boolean",
+            "description": "Adds a switch for jet mode, on models that support it."
           },
           "ac_buttons": {
-            "title": "Customize AC buttons",
+            "title": "Mode buttons",
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
                 "name": {
-                  "type": "string"
+                  "title": "Button name",
+                  "type": "string",
+                  "description": "The name of the switch in HomeKit, for example \"Dry mode\". Leave empty if you do not want mode buttons."
                 },
                 "op_mode": {
-                  "type": "integer"
+                  "title": "Mode",
+                  "type": "integer",
+                  "oneOf": [
+                    {
+                      "title": "Cool",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    {
+                      "title": "Dry",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    {
+                      "title": "Fan",
+                      "enum": [
+                        2
+                      ]
+                    },
+                    {
+                      "title": "Heat",
+                      "enum": [
+                        4
+                      ]
+                    },
+                    {
+                      "title": "Air clean",
+                      "enum": [
+                        5
+                      ]
+                    },
+                    {
+                      "title": "Auto",
+                      "enum": [
+                        6
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "ac_energy_save": {
-            "title": "Energy save as switch",
-            "type": "boolean"
+            "title": "Energy saving switch",
+            "type": "boolean",
+            "description": "Adds a switch for energy saving mode, on models that support it."
           },
           "ac_air_clean": {
-            "title": "Air purify as switch",
-            "type": "boolean"
+            "title": "Air purification switch",
+            "type": "boolean",
+            "description": "Adds a switch for air purification, on models that support it."
           },
           "ac_temperature_unit": {
-            "title": "Temperature Unit",
+            "title": "Temperature unit",
             "type": "string",
             "oneOf": [
               {
@@ -233,23 +285,28 @@
                   "F"
                 ]
               }
-            ]
+            ],
+            "description": "The unit the air conditioner uses."
           },
           "ref_express_freezer": {
-            "title": "Express Freezer / Ice Plus",
-            "type": "boolean"
+            "title": "Express Freezer / Ice Plus switch",
+            "type": "boolean",
+            "description": "Adds a switch for Express Freezer or Ice Plus, if the refrigerator has it."
           },
           "ref_express_fridge": {
-            "title": "Express Fridge",
-            "type": "boolean"
+            "title": "Express Fridge switch",
+            "type": "boolean",
+            "description": "Adds a switch for Express Fridge, if the refrigerator has it."
           },
           "ref_eco_friendly": {
-            "title": "Eco Friendly",
-            "type": "boolean"
+            "title": "Eco Friendly switch",
+            "type": "boolean",
+            "description": "Adds a switch for Eco Friendly mode, if the refrigerator has it."
           },
           "air_fast_mode": {
-            "title": "Air Fast Mode",
-            "type": "boolean"
+            "title": "Fast mode switch",
+            "type": "boolean",
+            "description": "Adds a switch for the fast mode of the air purifier."
           }
         }
       }
@@ -288,23 +345,21 @@
         {
           "key": "devices[]",
           "type": "fieldset",
-          "title": "Device Settings",
           "items": [
             {
               "type": "fieldset",
-              "title": "Air purifier specific settings",
-              "description": "Configure air purifier device settings.",
+              "title": "Air purifier options",
               "items": [
                 "devices[].air_fast_mode"
               ],
               "condition": {
                 "functionBody": "return model.devices && model.devices[arrayIndices] && ['AIR_PURIFIER'].includes(model.devices[arrayIndices].type);"
-              }
+              },
+              "htmlClass": "border-top mt-4 pt-3"
             },
             {
               "type": "fieldset",
-              "title": "Washer / Dryer specific settings",
-              "description": "Configure washer/dryer device settings.",
+              "title": "Washer and dryer options",
               "items": [
                 "devices[].washer_trigger",
                 "devices[].washer_tub_clean",
@@ -312,43 +367,46 @@
               ],
               "condition": {
                 "functionBody": "return model.devices && model.devices[arrayIndices] && ['WASHER','WASHER_NEW', 'WASH_TOWER', 'DRYER', 'WASH_TOWER_2'].includes(model.devices[arrayIndices].type);"
-              }
+              },
+              "htmlClass": "border-top mt-4 pt-3"
             },
             {
               "type": "fieldset",
-              "title": "Air conditioner specific settings",
-              "description": "Configure AC device settings.",
+              "title": "Air conditioner options",
               "items": [
-                "devices[].ac_air_quality",
                 "devices[].ac_mode",
                 "devices[].ac_swing_mode",
+                "devices[].ac_temperature_unit",
+                "devices[].ac_air_quality",
                 "devices[].ac_temperature_sensor",
                 "devices[].ac_humidity_sensor",
+                "devices[].ac_led_control",
                 "devices[].ac_fan_control",
                 "devices[].ac_jet_control",
                 "devices[].ac_energy_save",
                 "devices[].ac_air_clean",
-                "devices[].ac_temperature_unit",
                 {
                   "key": "devices[].ac_buttons",
-                  "title": "AC buttons",
-                  "description": "Configure AC buttons. For details check README.",
+                  "title": "Mode buttons",
+                  "description": "Adds a switch for each mode you list. Turning a switch on sets the air conditioner to that mode; turning it off goes back to cooling.",
                   "type": "array",
                   "buttonText": "Add button",
                   "items": [
                     "devices[].ac_buttons[].name",
                     "devices[].ac_buttons[].op_mode"
-                  ]
+                  ],
+                  "listItems": 0,
+                  "htmlClass": "mt-3"
                 }
               ],
               "condition": {
                 "functionBody": "return model.devices && model.devices[arrayIndices] && ['AC'].includes(model.devices[arrayIndices].type);"
-              }
+              },
+              "htmlClass": "border-top mt-4 pt-3"
             },
             {
               "type": "fieldset",
-              "title": "Refrigerator specific settings",
-              "description": "Configure refrigerator device settings.",
+              "title": "Refrigerator options",
               "items": [
                 "devices[].ref_express_freezer",
                 "devices[].ref_express_fridge",
@@ -356,18 +414,19 @@
               ],
               "condition": {
                 "functionBody": "return model.devices && model.devices[arrayIndices] && ['REFRIGERATOR'].includes(model.devices[arrayIndices].type);"
-              }
+              },
+              "htmlClass": "border-top mt-4 pt-3"
             },
             {
               "type": "fieldset",
-              "title": "Dishwasher specific settings",
-              "description": "Configure dishwasher device settings.",
+              "title": "Dishwasher options",
               "items": [
                 "devices[].dishwasher_trigger"
               ],
               "condition": {
                 "functionBody": "return model.devices && model.devices[arrayIndices] && ['DISHWASHER'].includes(model.devices[arrayIndices].type);"
-              }
+              },
+              "htmlClass": "border-top mt-4 pt-3"
             }
           ]
         }

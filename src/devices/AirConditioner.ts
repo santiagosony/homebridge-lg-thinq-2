@@ -61,7 +61,7 @@ export type Config = {
   ac_fan_control: boolean,
   ac_jet_control: boolean,
   ac_temperature_unit: string,
-  ac_buttons: { name: string, op_mode: string }[],
+  ac_buttons: { name?: string, op_mode?: number | string }[],
   ac_air_clean: boolean,
   ac_energy_save: boolean,
 }
@@ -554,6 +554,23 @@ export function windStrengthFromRotationSpeed(value: CharacteristicValue): numbe
   // the slowest speed, as turning the unit off is a separate characteristic.
   const step = Math.min(HOMEKIT_FAN_SPEED_MAX, Math.max(1, Math.round(vNum)));
   return LG_FAN_SPEEDS[step - 1];
+}
+
+/**
+ * The mode buttons to create from the `ac_buttons` setting. The settings form always
+ * shows one button row, so rows without a name or a mode are skipped.
+ */
+export function modeButtonsFromConfig(buttons: unknown): { name: string, opMode: number }[] {
+  if (!Array.isArray(buttons)) {
+    return [];
+  }
+  return buttons
+    .map(button => ({
+      name: typeof button?.name === 'string' ? button.name.trim() : '',
+      opMode: typeof button?.op_mode === 'number' ? button.op_mode
+        : typeof button?.op_mode === 'string' && button.op_mode.trim() !== '' ? Number(button.op_mode) : NaN,
+    }))
+    .filter(button => button.name !== '' && Number.isInteger(button.opMode));
 }
 
 export function swingCommandsForMode(value: CharacteristicValue, swingMode: string): AirConditionerSwingCommand[] {
@@ -1807,7 +1824,8 @@ export default class AirConditioner extends BaseDevice {
   }
 
   public setupButton(device: Device) {
-    if (!this.config.ac_buttons.length) {
+    const buttons = modeButtonsFromConfig(this.config.ac_buttons);
+    if (!buttons.length) {
       return;
     }
 
@@ -1819,8 +1837,8 @@ export default class AirConditioner extends BaseDevice {
       this.accessory.removeService(this.serviceLabelButtons.linkedServices[i]);
     }
 
-    for (let i = 0; i < this.config.ac_buttons.length; i++) {
-      this.setupButtonOpmode(device, this.config.ac_buttons[i].name, parseInt(this.config.ac_buttons[i].op_mode));
+    for (const button of buttons) {
+      this.setupButtonOpmode(device, button.name, button.opMode);
     }
   }
 

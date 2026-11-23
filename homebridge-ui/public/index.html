@@ -455,11 +455,24 @@
       return device;
     }
 
-    return {
+    const next = {
       ...device,
       ac_energy_save: typeof device.ac_energy_save === 'boolean' ? device.ac_energy_save : true,
       ac_air_clean: typeof device.ac_air_clean === 'boolean' ? device.ac_air_clean : true,
+      // Same defaults as the plugin, so the lists show the mode in use instead of "None".
+      ac_mode: device.ac_mode || 'BOTH',
+      ac_swing_mode: device.ac_swing_mode || 'BOTH',
+      ac_temperature_unit: device.ac_temperature_unit || 'C',
     };
+
+    // The form always shows one mode button row; do not save it while it is empty.
+    if (Array.isArray(next.ac_buttons)) {
+      next.ac_buttons = next.ac_buttons.filter(button => button
+        && ((typeof button.name === 'string' && button.name.trim() !== '')
+          || (button.op_mode !== undefined && button.op_mode !== null && button.op_mode !== '')));
+    }
+
+    return next;
   }
 
   function pruneDeviceSettingsForType(device, options = {}) {

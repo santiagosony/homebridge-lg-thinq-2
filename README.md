@@ -206,7 +206,7 @@ Every device entry accepts `id` (required), `name`, and `serial_number`. The opt
 | `ac_jet_control` | `false` | Add a switch for jet mode. |
 | `ac_energy_save` | `true` | Add a switch for energy saving. |
 | `ac_air_clean` | `true` | Add a switch for air purification. |
-| `ac_buttons` | `[]` | Extra switches for operation modes, as `{ "name": "...", "op_mode": number }`. |
+| `ac_buttons` | `[]` | Mode buttons: a switch for each entry, as `{ "name": "...", "op_mode": number }`, where `op_mode` is 0 cool, 1 dry, 2 fan, 4 heat, 5 air clean, or 6 auto. Turning a switch on sets that mode; turning it off goes back to cooling. Entries without a name or mode are ignored. |
 
 #### Washer and Dryer
 
