@@ -288,8 +288,6 @@
               "type": "fieldset",
               "title": "Air purifier specific settings",
               "description": "Configure air purifier device settings.",
-              "expandable": true,
-              "expanded": false,
               "items": [
                 "devices[].air_fast_mode"
               ],
@@ -301,8 +299,6 @@
               "type": "fieldset",
               "title": "Washer / Dryer specific settings",
               "description": "Configure washer/dryer device settings.",
-              "expandable": true,
-              "expanded": false,
               "items": [
                 "devices[].washer_trigger",
                 "devices[].washer_tub_clean",
@@ -316,8 +312,6 @@
               "type": "fieldset",
               "title": "Air conditioner specific settings",
               "description": "Configure AC device settings.",
-              "expandable": true,
-              "expanded": false,
               "items": [
                 "devices[].ac_air_quality",
                 "devices[].ac_mode",
@@ -349,8 +343,6 @@
               "type": "fieldset",
               "title": "Refrigerator specific settings",
               "description": "Configure refrigerator device settings.",
-              "expandable": true,
-              "expanded": false,
               "items": [
                 "devices[].ref_express_freezer",
                 "devices[].ref_express_fridge",
@@ -364,8 +356,6 @@
               "type": "fieldset",
               "title": "Dishwasher specific settings",
               "description": "Configure dishwasher device settings.",
-              "expandable": true,
-              "expanded": false,
               "items": [
                 "devices[].dishwasher_trigger"
               ],

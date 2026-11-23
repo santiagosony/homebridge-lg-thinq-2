@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.0.12
+
+### Homebridge UI
+
+* The settings of each device type are now shown open instead of in a collapsed section. They were collapsed when every device showed the settings of all device types; now each device shows only its own, so collapsing them only added a click.
+
 ## v2.0.11
 
 ### Login

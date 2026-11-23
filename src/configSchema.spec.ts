@@ -39,4 +39,20 @@ describe('config.schema.json', () => {
       expect(body).toContain('model.devices[arrayIndices].type');
     }
   });
+
+  test('shows the settings of the device type open, not collapsed', () => {
+    // Each device shows only the settings of its own type, so collapsing them only adds a click.
+    const typeSections = (function collect(items: LayoutItem[] = []): Record<string, unknown>[] {
+      return items.flatMap(item => typeof item === 'string' ? [] : [
+        ...(item.condition?.functionBody?.includes('.type') ? [item as Record<string, unknown>] : []),
+        ...collect(item.items),
+      ]);
+    })(schema.layout);
+
+    expect(typeSections.length).toBeGreaterThanOrEqual(5);
+    for (const section of typeSections) {
+      expect(section.expandable).toBeUndefined();
+      expect(section.expanded).toBeUndefined();
+    }
+  });
 });
