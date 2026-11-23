@@ -341,15 +341,19 @@ describe('MQTT certificate helpers', () => {
 
     expect(connection).toEqual({
       connectData: {
-        ...mqttCertificatePaths(mqttDir),
         clientId: 'client-id',
         host: 'mqtt.example.com',
+        ca: ROOT_CA,
+        key: 'private-key',
+        cert: CLIENT_CERTIFICATE,
       },
       subscriptions: ['subscription-a', 'subscription-b'],
     });
-    await expect(FS.promises.readFile(connection.connectData.caPath, 'utf8')).resolves.toBe(ROOT_CA);
-    await expect(FS.promises.readFile(connection.connectData.keyPath, 'utf8')).resolves.toBe('private-key');
-    await expect(FS.promises.readFile(connection.connectData.certPath, 'utf8')).resolves.toBe(CLIENT_CERTIFICATE);
+    // The files are still written, with the same content.
+    const paths = mqttCertificatePaths(mqttDir);
+    await expect(FS.promises.readFile(paths.caPath, 'utf8')).resolves.toBe(ROOT_CA);
+    await expect(FS.promises.readFile(paths.keyPath, 'utf8')).resolves.toBe('private-key');
+    await expect(FS.promises.readFile(paths.certPath, 'utf8')).resolves.toBe(CLIENT_CERTIFICATE);
     expect(api.postRequest).toHaveBeenNthCalledWith(1, MQTT_CLIENT_PATH, {});
     expect(api.postRequest).toHaveBeenNthCalledWith(2, MQTT_CERTIFICATE_PATH, { csr: 'csr-body' });
   });

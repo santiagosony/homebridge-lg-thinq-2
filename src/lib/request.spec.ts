@@ -3,7 +3,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { MonitorError, NotConnectedError } from '../errors/index.js';
-import { BROWSER_USER_AGENT, requestClient } from './request.js';
+import { BROWSER_USER_AGENT, isRetryableRequestError, requestClient, requestRetry } from './request.js';
 
 const originalAdapter = requestClient.defaults.adapter;
 
@@ -131,5 +131,96 @@ describe('request client User-Agent', () => {
     await requestClient.get(`${baseUrl}/service/devices`, { headers: { 'User-Agent': 'okhttp/3.14.9' } });
 
     expect(receivedUserAgents).toEqual(['okhttp/3.14.9', 'okhttp/3.14.9']);
+  });
+});
+
+describe('request retries', () => {
+  let server: Server;
+  let baseUrl: string;
+  let statuses: number[];
+  let requestCount: number;
+  const originalDelay = requestRetry.delayMs;
+
+  beforeAll(async () => {
+    server = createServer((req, res) => {
+      requestCount++;
+      res.statusCode = statuses.shift() ?? 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ attempt: requestCount }));
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  });
+
+  afterEach(() => {
+    requestRetry.delayMs = originalDelay;
+  });
+
+  const answer = (...nextStatuses: number[]) => {
+    statuses = nextStatuses;
+    requestCount = 0;
+    const delays: number[] = [];
+    requestRetry.delayMs = (retryCount: number) => {
+      delays.push(retryCount);
+      return 0;
+    };
+    return delays;
+  };
+
+  test('waits 2 and then 4 seconds between tries', () => {
+    expect(originalDelay(1)).toBe(2000);
+    expect(originalDelay(2)).toBe(4000);
+    expect(requestRetry.retries).toBe(2);
+  });
+
+  test('tries again after server errors, up to 3 tries', async () => {
+    const delays = answer(503, 502);
+
+    const response = await requestClient.get(`${baseUrl}/service/homes`);
+
+    expect(response.data).toEqual({ attempt: 3 });
+    expect(delays).toEqual([1, 2]);
+  });
+
+  test('gives up after 3 tries', async () => {
+    answer(500, 500, 500, 200);
+
+    await expect(requestClient.post(`${baseUrl}/service/homes`, {})).rejects.toMatchObject({ response: { status: 500 } });
+    expect(requestCount).toBe(3);
+  });
+
+  test('does not try again after other errors', async () => {
+    answer(400, 200);
+
+    await expect(requestClient.get(`${baseUrl}/service/homes`)).rejects.toMatchObject({ response: { status: 400 } });
+    expect(requestCount).toBe(1);
+  });
+
+  test('tries again when the connection fails, and reports it once as not connected', async () => {
+    const delays = answer();
+    // A port that was free a moment ago: connecting to it is refused.
+    const closed = createServer();
+    await new Promise<void>(resolve => closed.listen(0, '127.0.0.1', resolve));
+    const closedUrl = `http://127.0.0.1:${(closed.address() as AddressInfo).port}/service/homes`;
+    await new Promise<void>(resolve => closed.close(() => resolve()));
+
+    const error = await requestClient.get(closedUrl).catch((err: unknown) => err);
+
+    expect(delays).toEqual([1, 2]);
+    expect(error).toBeInstanceOf(NotConnectedError);
+    // The translated error is not wrapped again by the earlier tries.
+    expect((error as Error & { cause?: { code?: string } }).cause?.code).toBe('ECONNREFUSED');
+  });
+
+  test('knows which errors to try again', () => {
+    expect(isRetryableRequestError({ code: 'ECONNRESET' })).toBe(true);
+    expect(isRetryableRequestError({ response: { status: 504 } })).toBe(true);
+    expect(isRetryableRequestError({ response: { status: 429 } })).toBe(false);
+    expect(isRetryableRequestError({ code: 'ETIMEDOUT' })).toBe(false);
+    expect(isRetryableRequestError(undefined)).toBe(false);
   });
 });

@@ -7,7 +7,7 @@ import { DeviceModel, loadDeviceModelForDevice } from './DeviceModel.js';
 import * as Path from 'path';
 import Helper from '../v1/helper.js';
 import { PLUGIN_NAME } from '../settings.js';
-import { device as awsIotDevice } from 'aws-iot-device-sdk';
+import mqtt from 'mqtt';
 import Persist from './Persist.js';
 import { coerceCommandPayload } from './commandPayload.js';
 import {
@@ -15,7 +15,7 @@ import {
   prepareMqttConnection,
   retryMqttRegistration,
 } from './mqttCertificate.js';
-import { wireMqttDeviceEvents } from './mqttConnection.js';
+import { mqttClientOptions, wireMqttDeviceEvents } from './mqttConnection.js';
 import {
   pollThinQ1MonitorResult,
   registerThinQ1WorkId,
@@ -173,7 +173,7 @@ export class ThinQ {
       });
 
       this.logger.debug('open mqtt connection to', setup.mqttServer);
-      const device = new awsIotDevice(connection.connectData);
+      const device = mqtt.connect(mqttClientOptions(connection.connectData));
 
       wireMqttDeviceEvents({
         device,

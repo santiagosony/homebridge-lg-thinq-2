@@ -60,9 +60,15 @@ export type MqttConnectionSetup = {
 };
 
 export type MqttPreparedConnection = {
-  connectData: MqttCertificatePaths & {
+  connectData: {
     clientId: string;
     host: string;
+    /** PEM root certificate(s) of the MQTT server, already validated. */
+    ca: string;
+    /** PEM private key of this client. */
+    key: string;
+    /** PEM client certificate from LG, already validated. */
+    cert: string;
   };
   subscriptions: string[];
 };
@@ -264,18 +270,24 @@ export async function prepareMqttConnection(options: {
 }): Promise<MqttPreparedConnection> {
   const { api, setup, mqttDir, clientId } = options;
   const certificate = await requestMqttCertificate(api, setup.csr);
-  const paths = await writeMqttCertificateFiles({
+  const rootCA = validatePemCertificates(setup.rootCA, 'MQTT root certificate');
+  const certificatePem = validatePemCertificates(certificate.certificatePem, 'MQTT client certificate');
+  // The connection uses the certificates in memory. The files are still written, as
+  // before, so the MQTT connection can be checked by hand with other tools.
+  await writeMqttCertificateFiles({
     mqttDir,
-    rootCA: setup.rootCA,
+    rootCA,
     privateKey: setup.keys.privateKey,
-    certificatePem: certificate.certificatePem,
+    certificatePem,
   });
 
   return {
     connectData: {
-      ...paths,
       clientId,
       host: setup.hostname,
+      ca: rootCA,
+      key: setup.keys.privateKey,
+      cert: certificatePem,
     },
     subscriptions: certificate.subscriptions,
   };

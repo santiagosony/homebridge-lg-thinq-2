@@ -1,14 +1,23 @@
 # Change Log
 
-## Unreleased
+## v2.0.20-beta.0
 
-These changes do not change the plugin, so they are not published on their own; they are part of the next release.
+### Real-time updates (MQTT)
+
+* Fixed the MQTT connection reconnecting twice after it dropped. When the connection to LG's MQTT server was lost, the plugin closed it and opened a new one 60 seconds later, but the closed connection kept reconnecting on its own every second, with the same client id. LG's server (AWS IoT) keeps only one connection per client id and closes the older one, so the two connections could keep dropping each other. This came from the original plugin.
+* The plugin now connects with the `mqtt` library directly, instead of through `aws-iot-device-sdk`, which wrapped an older version of it. The connection settings are the same (MQTT 3.1.1 over TLS on port 8883, the client certificate from LG, a 5 minute keepalive). The certificates are used from memory; the files in the plugin's `persist/mqtt` folder are still written.
+
+### Dependencies
+
+* Installing the plugin no longer shows npm warnings about unmaintained packages: `inflight`, `glob` 7, and `crypto-js` came from `aws-iot-device-sdk`, and `axios-retry` is no longer maintained. Retrying failed requests to LG is now part of the plugin, with the same rules: up to 2 more tries, after 2 and 4 seconds, when the connection fails or LG answers with a server error. The plugin now installs 84 packages instead of 99.
+* Error messages in the log now describe errors from Node.js in every case, instead of sometimes "Non-error value".
 
 ### Tests
 
 * The tests no longer depend on LG servers. The API tests use made-up LG answers, and a test setup file makes any connection to an outside server fail at once, naming the host. Before, CI could fail whenever LG was slow or limited requests, and the tests could not run without access to LG.
 * New tests for the LG API client: the gateway lookup, sign-in and token refresh, repeating a request after the token expires or LG asks to accept new terms, device lists and commands, ThinQ1 monitoring, and error logging. Its test coverage went from about 67% to 99%.
 * CI now runs the tests with coverage and enforces higher thresholds, so coverage cannot drop without notice.
+* New tests for the MQTT connection, with a local MQTT server over TLS and made-up certificates: the client certificate, the subscriptions, messages, reconnecting after the connection drops, and refusing a server certificate that LG's root certificate did not sign. And for retrying failed requests.
 
 ### Contributing
 

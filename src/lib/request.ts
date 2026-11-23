@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import {
   ManualProcessNeeded,
   ManualProcessNeededErrorCode,
@@ -8,7 +8,6 @@ import {
   TokenExpiredError,
   NotConnectedErrorCodes,
 } from '../errors/index.js';
-import axiosRetry from 'axios-retry';
 
 const MAX_REQUESTS_COUNT = 1;
 const INTERVAL_MS = 10;
@@ -73,19 +72,39 @@ client.interceptors.response.use((response) => {
   return Promise.reject(err);
 });
 
-axiosRetry(client, {
-  retries: 2, // try 3 times
-  retryDelay: (retryCount) => {
-    return retryCount * 2000;
-  },
-  retryCondition: (err) => {
-    if (err.code?.indexOf('ECONN') === 0) {
-      return true;
-    }
+/**
+ * Retries of failed requests: up to 2 more tries, after 2 and then 4 seconds, when
+ * the connection failed or the server answered with a server error (HTTP 500-504).
+ * Each try gets the full timeout. The delay can be changed by tests.
+ */
+export const requestRetry = {
+  retries: 2,
+  delayMs: (retryCount: number) => retryCount * 2000,
+};
 
-    return err.response !== undefined && [500, 501, 502, 503, 504].includes(err.response.status);
-  },
-  shouldResetTimeout: true, // reset timeout each retries
+const RETRY_STATUSES = new Set([500, 501, 502, 503, 504]);
+
+export function isRetryableRequestError(err: any): boolean {
+  if (typeof err?.code === 'string' && err.code.startsWith('ECONN')) {
+    return true;
+  }
+  return err?.response !== undefined && RETRY_STATUSES.has(err.response.status);
+}
+
+type RetryRequestConfig = InternalAxiosRequestConfig & { lgRetryCount?: number };
+
+client.interceptors.response.use(undefined, async (err) => {
+  const config = err?.config as RetryRequestConfig | undefined;
+  if (!config || !isRetryableRequestError(err)) {
+    throw err;
+  }
+  const retryCount = (config.lgRetryCount ?? 0) + 1;
+  if (retryCount > requestRetry.retries) {
+    throw err;
+  }
+  config.lgRetryCount = retryCount;
+  await new Promise(resolve => setTimeout(resolve, requestRetry.delayMs(retryCount)));
+  return client.request(config);
 });
 
 client.interceptors.response.use((response) => {
@@ -104,6 +123,11 @@ client.interceptors.response.use((response) => {
 
   return response;
 }, (err) => {
+  // Errors of a retried request were already translated when that request failed.
+  if (err instanceof NotConnectedError || err instanceof TokenExpiredError
+    || err instanceof ManualProcessNeeded || err instanceof MonitorError) {
+    throw err;
+  }
   if (!err.response) {
     throw errorWithCause(new NotConnectedError(responseErrorMessage(err, 'Network request failed.')), err);
   } else if (err.response.data?.resultCode === '9999') {

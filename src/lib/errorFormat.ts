@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { types } from 'node:util';
 
 const MAX_CAUSE_DEPTH = 3;
 
@@ -53,6 +54,12 @@ function lgResponseDetails(data: unknown): string[] {
   return details;
 }
 
+// Also true for errors made in another JavaScript realm (for example Node.js errors
+// seen from a vm context, as in Jest), where `instanceof Error` is false.
+function isError(value: unknown): value is Error {
+  return value instanceof Error || types.isNativeError(value);
+}
+
 // The plugin's own error classes do not set `name`, so fall back to the class name.
 function errorName(err: Error): string {
   return err.name !== 'Error' ? err.name : (err.constructor?.name || 'Error');
@@ -75,7 +82,7 @@ function describeOne(err: unknown): string {
     return `${err.name}: ${err.message}` + (details.length ? ` (${details.join(', ')})` : '');
   }
 
-  if (err instanceof Error) {
+  if (isError(err)) {
     return `${errorName(err)}: ${err.message}`;
   }
 
@@ -102,12 +109,12 @@ export function describeError(err: unknown, options: DescribeOptions = {}): stri
     const prefix = depth === 0 ? '' : 'Caused by: ';
     lines.push(prefix + describeOne(current));
 
-    if (options.stack && current instanceof Error && current.stack) {
+    if (options.stack && isError(current) && current.stack) {
       const frames = current.stack.split('\n').filter(line => line.trimStart().startsWith('at '));
       lines.push(...frames);
     }
 
-    current = current instanceof Error ? (current as Error & { cause?: unknown }).cause : undefined;
+    current = isError(current) ? (current as Error & { cause?: unknown }).cause : undefined;
   }
 
   return lines.join('\n');

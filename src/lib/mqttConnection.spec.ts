@@ -114,7 +114,7 @@ describe('MQTT runtime event wiring', () => {
     expect(logger.debug).toHaveBeenCalledWith('mqtt invalid message received:', 'not-json');
   });
 
-  test('ends offline devices and schedules reconnect', () => {
+  test('ends offline devices right after the event, and schedules reconnect', async () => {
     const device = new FakeMqttDevice();
     const logger = fakeLogger();
     const reconnect = jest.fn(async () => undefined);
@@ -135,6 +135,10 @@ describe('MQTT runtime event wiring', () => {
 
     device.handlers.offline?.();
 
+    // Not during the event: mqtt starts its reconnect timer after it, and ending the
+    // client later stops that timer too.
+    expect(device.end).not.toHaveBeenCalled();
+    await Promise.resolve();
     expect(device.end).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith('MQTT disconnected, retrying in 60 seconds!');
     expect(scheduleReconnect).toHaveBeenCalledWith(expect.any(Function), MQTT_OFFLINE_RECONNECT_DELAY_MS);

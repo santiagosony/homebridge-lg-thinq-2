@@ -1,6 +1,37 @@
+import type { IClientOptions } from 'mqtt';
 import { describeError } from './errorFormat.js';
+import type { MqttPreparedConnection } from './mqttCertificate.js';
 
 export const MQTT_OFFLINE_RECONNECT_DELAY_MS = 60000;
+export const MQTT_PORT = 8883;
+export const MQTT_KEEPALIVE_SECONDS = 300;
+
+/**
+ * Options for `mqtt.connect` to LG's MQTT server (AWS IoT).
+ *
+ * These are the settings the plugin used through aws-iot-device-sdk, which wrapped
+ * the same mqtt library: MQTT 3.1.1 over TLS on port 8883, signed in with the client
+ * certificate from LG, and a keepalive of 5 minutes. The server certificate is
+ * checked against the root certificate (mqtt sets the server name for TLS).
+ * reconnectPeriod must stay above 0: mqtt only emits `offline` when it would
+ * reconnect, and `wireMqttDeviceEvents` reconnects on `offline`.
+ */
+export function mqttClientOptions(connectData: MqttPreparedConnection['connectData']): IClientOptions {
+  return {
+    protocol: 'mqtts',
+    host: connectData.host,
+    port: MQTT_PORT,
+    protocolVersion: 4,
+    clientId: connectData.clientId,
+    ca: connectData.ca,
+    key: connectData.key,
+    cert: connectData.cert,
+    rejectUnauthorized: true,
+    keepalive: MQTT_KEEPALIVE_SECONDS,
+    reconnectPeriod: 1000,
+    clean: true,
+  };
+}
 
 export type MqttRuntimeDevice = {
   on(event: 'error', handler: (err: unknown) => void): unknown;
@@ -71,7 +102,11 @@ export function wireMqttDeviceEvents(options: {
   });
 
   device.on('offline', () => {
-    device.end();
+    // mqtt emits `offline` just before it starts its own reconnect timer, so ending
+    // the client during the event leaves that timer running: the closed client would
+    // keep reconnecting every second with the same client id, next to the new one.
+    // Ending it right after the event also stops the timer.
+    queueMicrotask(() => device.end());
 
     logger.info('MQTT disconnected, retrying in 60 seconds!');
     scheduleReconnect(() => {
