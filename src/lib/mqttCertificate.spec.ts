@@ -20,10 +20,30 @@ import {
   rootCaUrlForMqttHost,
   writeIfChanged,
   writeMqttCertificateFiles,
+  validatePemCertificates,
   MqttConnectionSetup,
 } from './mqttCertificate.js';
+import forge from 'node-forge';
 
 let tempDirs: string[] = [];
+
+// Real self-signed certificates, because certificate data from LG is validated before it is written.
+function makeCertificatePem(commonName: string): string {
+  const keys = forge.pki.rsa.generateKeyPair({ bits: 1024 });
+  const certificate = forge.pki.createCertificate();
+  certificate.publicKey = keys.publicKey;
+  certificate.serialNumber = '01';
+  certificate.validity.notBefore = new Date('2026-01-01T00:00:00Z');
+  certificate.validity.notAfter = new Date('2036-01-01T00:00:00Z');
+  const attributes = [{ name: 'commonName', value: commonName }];
+  certificate.setSubject(attributes);
+  certificate.setIssuer(attributes);
+  certificate.sign(keys.privateKey, forge.md.sha256.create());
+  return forge.pki.certificateToPem(certificate);
+}
+
+const ROOT_CA = makeCertificatePem('Test Root CA');
+const CLIENT_CERTIFICATE = makeCertificatePem('Test MQTT client');
 
 async function makeTempDir(): Promise<string> {
   const tempDir = await FS.promises.mkdtemp(Path.join(OS.tmpdir(), 'lg-thinq-mqtt-'));
@@ -96,15 +116,15 @@ describe('MQTT certificate helpers', () => {
 
     const paths = await writeMqttCertificateFiles({
       mqttDir,
-      rootCA: 'root-ca',
+      rootCA: ROOT_CA,
       privateKey: 'private-key',
-      certificatePem: 'certificate',
+      certificatePem: CLIENT_CERTIFICATE,
     });
 
     expect(paths).toEqual(mqttCertificatePaths(mqttDir));
-    await expect(FS.promises.readFile(paths.caPath, 'utf8')).resolves.toBe('root-ca');
+    await expect(FS.promises.readFile(paths.caPath, 'utf8')).resolves.toBe(ROOT_CA);
     await expect(FS.promises.readFile(paths.keyPath, 'utf8')).resolves.toBe('private-key');
-    await expect(FS.promises.readFile(paths.certPath, 'utf8')).resolves.toBe('certificate');
+    await expect(FS.promises.readFile(paths.certPath, 'utf8')).resolves.toBe(CLIENT_CERTIFICATE);
   });
 
   const modeOf = async (path: string) => (await FS.promises.stat(path)).mode & 0o777;
@@ -117,9 +137,9 @@ describe('MQTT certificate helpers', () => {
 
     const paths = await writeMqttCertificateFiles({
       mqttDir,
-      rootCA: 'root-ca',
+      rootCA: ROOT_CA,
       privateKey: 'private-key',
-      certificatePem: 'certificate',
+      certificatePem: CLIENT_CERTIFICATE,
     });
 
     expect(await modeOf(paths.keyPath)).toBe(0o600);
@@ -134,13 +154,44 @@ describe('MQTT certificate helpers', () => {
 
     await writeMqttCertificateFiles({
       mqttDir,
-      rootCA: 'root-ca',
+      rootCA: ROOT_CA,
       privateKey: 'private-key',
-      certificatePem: 'certificate',
+      certificatePem: CLIENT_CERTIFICATE,
     });
 
     expect(await modeOf(paths.keyPath)).toBe(0o600);
     expect(await modeOf(mqttDir)).toBe(0o700);
+  });
+
+  test('accepts PEM certificates, including chains, from LG', () => {
+    expect(validatePemCertificates(ROOT_CA, 'MQTT root certificate')).toBe(ROOT_CA);
+    const chain = CLIENT_CERTIFICATE + ROOT_CA;
+    expect(validatePemCertificates(chain, 'MQTT root certificate')).toBe(chain);
+  });
+
+  test.each([
+    ['an HTML error page', '<html><body>Service Unavailable</body></html>', 'no PEM certificate'],
+    ['an empty API error response', {}, 'not text'],
+    ['an empty string', '', 'no PEM certificate'],
+    ['text around the certificate', 'Warning: maintenance\n' + ROOT_CA, 'unexpected content outside the PEM certificates'],
+    ['a block that is not a certificate', '-----BEGIN CERTIFICATE-----\nbm90IGEgY2VydGlmaWNhdGU=\n-----END CERTIFICATE-----\n',
+      'a PEM block is not a valid X.509 certificate'],
+  ])('rejects %s from LG without echoing it', (_label, data, reason) => {
+    expect(() => validatePemCertificates(data, 'MQTT root certificate'))
+      .toThrow(`LG returned an invalid MQTT root certificate (${reason}); skipping this connection attempt.`);
+  });
+
+  test('writes no file when LG returns an invalid certificate', async () => {
+    const mqttDir = Path.join(await makeTempDir(), 'mqtt');
+
+    await expect(writeMqttCertificateFiles({
+      mqttDir,
+      rootCA: ROOT_CA,
+      privateKey: 'private-key',
+      certificatePem: '<html>error</html>',
+    })).rejects.toThrow('LG returned an invalid MQTT client certificate (no PEM certificate)');
+
+    await expect(FS.promises.access(mqttDir)).rejects.toThrow();
   });
 
   test('requests an MQTT certificate with the formatted CSR body', async () => {
@@ -154,7 +205,7 @@ describe('MQTT certificate helpers', () => {
         if (uri === MQTT_CERTIFICATE_PATH) {
           return {
             result: {
-              certificatePem: 'certificate',
+              certificatePem: CLIENT_CERTIFICATE,
               subscriptions: ['subscription-a'],
             },
           };
@@ -171,7 +222,7 @@ describe('MQTT certificate helpers', () => {
     ].join('\n'));
 
     expect(certificate).toEqual({
-      certificatePem: 'certificate',
+      certificatePem: CLIENT_CERTIFICATE,
       subscriptions: ['subscription-a'],
     });
     expect(api.postRequest).toHaveBeenNthCalledWith(1, MQTT_CLIENT_PATH, {});
@@ -200,7 +251,7 @@ describe('MQTT certificate helpers', () => {
           };
         }
 
-        return 'root-ca';
+        return ROOT_CA;
       }),
       postRequest: jest.fn(async (uri: string, data: any) => {
         void uri;
@@ -236,7 +287,7 @@ describe('MQTT certificate helpers', () => {
         publicKey: 'public-key',
       },
       csr: 'csr-for-public-key',
-      rootCA: 'root-ca',
+      rootCA: ROOT_CA,
     });
     expect(api.getRequest).toHaveBeenNthCalledWith(1, MQTT_ROUTE_URL);
     expect(api.getRequest).toHaveBeenNthCalledWith(2, ATS_ROOT_CA_URL);
@@ -258,7 +309,7 @@ describe('MQTT certificate helpers', () => {
         if (uri === MQTT_CERTIFICATE_PATH) {
           return {
             result: {
-              certificatePem: 'certificate',
+              certificatePem: CLIENT_CERTIFICATE,
               subscriptions: ['subscription-a', 'subscription-b'],
             },
           };
@@ -278,7 +329,7 @@ describe('MQTT certificate helpers', () => {
         publicKey: 'public-key',
       },
       csr: 'csr-body',
-      rootCA: 'root-ca',
+      rootCA: ROOT_CA,
     };
 
     const connection = await prepareMqttConnection({
@@ -296,9 +347,9 @@ describe('MQTT certificate helpers', () => {
       },
       subscriptions: ['subscription-a', 'subscription-b'],
     });
-    await expect(FS.promises.readFile(connection.connectData.caPath, 'utf8')).resolves.toBe('root-ca');
+    await expect(FS.promises.readFile(connection.connectData.caPath, 'utf8')).resolves.toBe(ROOT_CA);
     await expect(FS.promises.readFile(connection.connectData.keyPath, 'utf8')).resolves.toBe('private-key');
-    await expect(FS.promises.readFile(connection.connectData.certPath, 'utf8')).resolves.toBe('certificate');
+    await expect(FS.promises.readFile(connection.connectData.certPath, 'utf8')).resolves.toBe(CLIENT_CERTIFICATE);
     expect(api.postRequest).toHaveBeenNthCalledWith(1, MQTT_CLIENT_PATH, {});
     expect(api.postRequest).toHaveBeenNthCalledWith(2, MQTT_CERTIFICATE_PATH, { csr: 'csr-body' });
   });

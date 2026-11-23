@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.0.14
+
+### Reliability
+
+* The MQTT root certificate and client certificate received from LG are now validated before they are written to disk: they must be PEM certificates that parse as X.509, with no other content. If LG or the certificate host returns something else, such as an error page, the plugin logs a clear error, writes no file, and retries later, instead of saving it as a certificate and failing with a TLS error. Checked against the real AWS and LG root certificates.
+* Known issue: the legacy root certificate URL (VeriSign G5, only used for MQTT hosts that are neither AWS IoT nor LG) now redirects to the DigiCert home page. It is now reported as an invalid certificate instead of being saved.
+
 ## v2.0.13
 
 ### Security

@@ -1,3 +1,4 @@
+import { X509Certificate } from 'crypto';
 import * as FS from 'fs';
 import * as Path from 'path';
 import forge from 'node-forge';
@@ -199,13 +200,51 @@ export async function writeIfChanged(path: string, content: string, mode?: numbe
   }
 }
 
+const PEM_CERTIFICATE_BLOCK = /-----BEGIN CERTIFICATE-----\r?\n[\s\S]*?-----END CERTIFICATE-----/g;
+
+/**
+ * Checks that certificate data received from LG is one or more PEM certificates,
+ * and returns it. Throws without including the data, which could be anything,
+ * such as an HTML error page.
+ *
+ * The data is written to disk for the MQTT client, so nothing else is accepted:
+ * no text outside the certificate blocks, and every block must parse as an X.509
+ * certificate.
+ */
+export function validatePemCertificates(data: unknown, description: string): string {
+  const invalid = (reason: string) => new Error(`LG returned an invalid ${description} (${reason}); skipping this connection attempt.`);
+
+  if (typeof data !== 'string') {
+    throw invalid('not text');
+  }
+  const blocks = data.match(PEM_CERTIFICATE_BLOCK) ?? [];
+  if (blocks.length === 0) {
+    throw invalid('no PEM certificate');
+  }
+  if (data.replace(PEM_CERTIFICATE_BLOCK, '').trim() !== '') {
+    throw invalid('unexpected content outside the PEM certificates');
+  }
+  for (const block of blocks) {
+    try {
+      new X509Certificate(block);
+    } catch {
+      throw invalid('a PEM block is not a valid X.509 certificate');
+    }
+  }
+
+  return data;
+}
+
 export async function writeMqttCertificateFiles(options: {
   mqttDir: string;
   rootCA: string;
   privateKey: string;
   certificatePem: string;
 }): Promise<MqttCertificatePaths> {
-  const { mqttDir, rootCA, privateKey, certificatePem } = options;
+  const { mqttDir, privateKey } = options;
+  // Validate both certificates from LG before writing any file.
+  const rootCA = validatePemCertificates(options.rootCA, 'MQTT root certificate');
+  const certificatePem = validatePemCertificates(options.certificatePem, 'MQTT client certificate');
   await FS.promises.mkdir(mqttDir, { recursive: true, mode: MQTT_DIRECTORY_MODE });
   await FS.promises.chmod(mqttDir, MQTT_DIRECTORY_MODE);
 
