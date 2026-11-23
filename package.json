@@ -74,7 +74,7 @@
     "nVuln (original author, https://github.com/nVuln/homebridge-lg-thinq)"
   ],
   "dependencies": {
-    "@homebridge/plugin-ui-utils": "^2.2.3",
+    "@homebridge/plugin-ui-utils": "^2.3.0",
     "aws-iot-device-sdk": "^2.2.16",
     "axios": "^1.21.1",
     "axios-retry": "^4.5.0",
