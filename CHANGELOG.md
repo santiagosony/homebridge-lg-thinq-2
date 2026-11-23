@@ -1,10 +1,20 @@
 # Change Log
 
-## Unreleased
+## v2.0.8
+
+### Security
+
+* The plugin no longer writes LG credentials to the Homebridge log. When refreshing the access token failed, the error was logged with its request body, which contains the refresh token; other errors could include the access token, or the username and password hash after a failed login. Errors are now logged as a short description (type, message, HTTP status, LG code, and URL without query parameters). Users often share these logs in public issues.
+* The MQTT private key (`key.pem`) is now readable only by the user that runs Homebridge (mode 600, folder 700). Before, any user on the machine could read it. Existing files are fixed on the next start.
+* When LG requires new terms, the plugin now loads the terms of the account's country and language (it always used Vietnam), and logs which terms it accepted on the account's behalf instead of accepting them silently.
+
+### Reliability
+
+* A command that failed while the plugin was not waiting for it (microwave and oven commands, and AC mode buttons), for example because LG reported the device as offline, was an unhandled promise rejection, and Homebridge shuts down on those. These commands now log the error instead. Added lint rules (`no-floating-promises`, `no-misused-promises`) so the problem cannot come back.
 
 ### Development
 
-* Updated development dependencies to clear all `npm audit` reports and Dependabot alerts (16, from critical to low): `handlebars`, `js-yaml`, `browserslist`, `baseline-browser-mapping`, `@babel/core`, `eslint`, `typescript-eslint`, `@humanfs/node`, and `minimatch`. `nodemon` is given `minimatch` 11 through an override, because every 10.x release is affected and nodemon still asks for 10.x. These packages are only used to build and test the plugin; the published package does not change.
+* Updated development dependencies to clear all `npm audit` reports and Dependabot alerts (16, from critical to low): `handlebars`, `js-yaml`, `browserslist`, `baseline-browser-mapping`, `@babel/core`, `eslint`, `typescript-eslint`, `@humanfs/node`, and `minimatch`. `nodemon` is given `minimatch` 11 through an override, because every 10.x release is affected and nodemon still asks for 10.x. These packages are only used to build and test the plugin and are not part of the published package.
 
 ## v2.0.7
 

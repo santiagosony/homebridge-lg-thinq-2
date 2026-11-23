@@ -6,6 +6,7 @@ import { EnumValue, RangeValue, ValueType } from '../lib/DeviceModel.js';
 import { normalizeBoolean, normalizeNumber } from '../utils/normalize.js';
 import { cToF, fToC } from '../utils/temperature.js';
 import { hasSnapshotKey, snapshotBoolean, snapshotNumber } from './helpers.js';
+import { describeError } from '../lib/errorFormat.js';
 
 export enum ACModelType {
   AWHP = 'AWHP',
@@ -217,7 +218,7 @@ function convertTemperatureCelsiusFromLGToHomekit(
       }
     }
   } catch (e) {
-    logger.warn('Temperature mapping lookup failed, falling back to direct conversion.', e);
+    logger.warn('Temperature mapping lookup failed, falling back to direct conversion.', describeError(e));
   }
   const c = Math.round(fToC(tempNum) * 100) / 100;
   return c;
@@ -243,7 +244,7 @@ function convertTemperatureCelsiusFromHomekitToLG(
       }
     }
   } catch (e) {
-    logger.warn('Temperature mapping lookup failed, falling back to direct conversion.', e);
+    logger.warn('Temperature mapping lookup failed, falling back to direct conversion.', describeError(e));
   }
   return temperatureInFahrenheit;
 }
@@ -805,7 +806,7 @@ export default class AirConditioner extends BaseDevice {
         + `${this.temperatureKeepAliveFailureCount} consecutive times; disabling keep-alive for this device.`;
       this.logger.debug(
         message,
-        error,
+        describeError(error),
       );
       this.stopTemperatureKeepAlive();
       return;
@@ -813,7 +814,7 @@ export default class AirConditioner extends BaseDevice {
 
     this.logger.debug(
       `[${device.name}] AC temperature keep-alive command failed; will retry.`,
-      error,
+      describeError(error),
     );
   }
 
@@ -1161,7 +1162,7 @@ export default class AirConditioner extends BaseDevice {
       }
       updateAccessoryCharacteristic();
     } catch (error) {
-      this.logger.error(errorMessage, error);
+      this.logger.error(errorMessage, describeError(error));
     }
   }
 
@@ -1271,7 +1272,7 @@ export default class AirConditioner extends BaseDevice {
       this.updateAccessoryFanStateCharacteristics();
       this.updateAccessoryFanV2Characteristic();
     } catch (error) {
-      this.logger.error('Error setting fan state:', error);
+      this.logger.error('Error setting fan state:', describeError(error));
     }
   }
 
@@ -1604,7 +1605,7 @@ export default class AirConditioner extends BaseDevice {
       this.accessory.context.device.data.snapshot['airState.lightingState.displayControl'] = value ? 1 : 0;
       this.updateAccessoryLedControlCharacteristic();
     } catch (error) {
-      this.logger.error('Error setting light state:', error);
+      this.logger.error('Error setting light state:', describeError(error));
     }
 
   }
@@ -1637,7 +1638,7 @@ export default class AirConditioner extends BaseDevice {
     try {
       await this.setOpMode(this.accessory.context.device.id, opMode);
     } catch (error) {
-      this.logger.error('Error setting target state:', error);
+      this.logger.error('Error setting target state:', describeError(error));
     }
   }
 
@@ -1661,7 +1662,7 @@ export default class AirConditioner extends BaseDevice {
         this.updateAccessoryActiveCharacteristic();
       }
     } catch (error) {
-      this.logger.error('Error setting active state:', error);
+      this.logger.error('Error setting active state:', describeError(error));
     }
   }
 
@@ -1717,7 +1718,7 @@ export default class AirConditioner extends BaseDevice {
       this.updateAccessoryTemperatureCharacteristics();
       return;
     } catch (error) {
-      this.logger.error('Error setting target temperature:', error);
+      this.logger.error('Error setting target temperature:', describeError(error));
     }
   }
 
@@ -1761,7 +1762,7 @@ export default class AirConditioner extends BaseDevice {
       });
       this.accessory.context.device.data.snapshot['airState.windStrength'] = windStrength;
     } catch (error) {
-      this.logger.error('Error setting fan speed:', error);
+      this.logger.error('Error setting fan speed:', describeError(error));
     }
   }
 
@@ -1788,7 +1789,7 @@ export default class AirConditioner extends BaseDevice {
       this.updateAccessoryFanStateCharacteristics();
       this.updateAccessoryFanV2Characteristic();
     } catch (error) {
-      this.logger.error('Error setting swing mode:', error);
+      this.logger.error('Error setting swing mode:', describeError(error));
     }
 
   }
@@ -1844,7 +1845,7 @@ export default class AirConditioner extends BaseDevice {
         return this.Status.opMode === opMode;
       }))
       .onSet((value: CharacteristicValue) => {
-        this.handleButtonOpmode(value, opMode);
+        this.runInBackground(this.handleButtonOpmode(value, opMode), 'Mode button command');
       });
 
     this.serviceLabelButtons.addLinkedService(serviceButton);

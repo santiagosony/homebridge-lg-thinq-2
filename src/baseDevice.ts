@@ -6,6 +6,7 @@ import {
 } from 'homebridge';
 import { Device } from './lib/Device.js';
 import { EventEmitter } from 'events';
+import { describeError } from './lib/errorFormat.js';
 
 export type AccessoryContext = {
   device: Device;
@@ -51,6 +52,19 @@ export class BaseDevice extends EventEmitter {
       this.accessory.context.device.data.online = snapshot.online;
     }
     this.updateAccessoryCharacteristic(this.accessory.context.device);
+  }
+
+  /**
+   * Runs a device command without waiting for it, and logs it if it fails.
+   *
+   * Commands can fail, for example when LG reports the device as offline. An
+   * unawaited promise that rejects is an unhandled rejection, which makes Homebridge
+   * shut down, so every command started without `await` must go through here.
+   */
+  protected runInBackground(command: Promise<unknown>, action: string): void {
+    command.catch(err => {
+      this.logger.error(`[${this.accessory.context.device.name}] ${action} failed:`, describeError(err));
+    });
   }
 
   protected get isOnlineForHomeKit(): boolean {

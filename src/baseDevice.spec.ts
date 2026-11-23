@@ -12,6 +12,10 @@ class TestBaseDevice extends BaseDevice {
   public testOnlineGet<T extends number | string | boolean>(getter: () => T) {
     return this.onlineGet(getter);
   }
+
+  public testRunInBackground(command: Promise<unknown>, action: string) {
+    this.runInBackground(command, action);
+  }
 }
 
 // Test suite for BaseDevice class
@@ -168,5 +172,22 @@ describe('BaseDevice', () => {
     baseDevice.update({ online: false });
 
     expect(accessory.context.device.data.online).toBe(false);
+  });
+
+  it('logs failed background commands instead of leaving an unhandled rejection', async () => {
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => unhandled.push(reason);
+    process.on('unhandledRejection', onUnhandled);
+
+    try {
+      const testDevice = new TestBaseDevice(platform, accessory, logger);
+      testDevice.testRunInBackground(Promise.reject(new Error('device is offline')), 'Stop command');
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Stop command failed:'), 'Error: device is offline');
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', onUnhandled);
+    }
   });
 });

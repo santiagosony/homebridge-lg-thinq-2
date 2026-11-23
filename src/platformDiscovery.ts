@@ -6,6 +6,7 @@ import { PlatformType } from './lib/constants.js';
 import type { ThinQ } from './lib/ThinQ.js';
 import type { DeviceAccessoryConstructor } from './platformAccessories.js';
 import { isDeviceEnabled } from './platformConfig.js';
+import { describeError } from './lib/errorFormat.js';
 
 export const DISCOVERY_RETRY_DELAY_MS = 30000;
 
@@ -47,7 +48,7 @@ export function unregisterUnsupportedDevice(options: {
   thinq.unregister(device).then(() => {
     log.debug(device.id, '- unregistered!');
   }).catch(err => {
-    log.debug(device.id, '- unregister failed:', err);
+    log.debug(device.id, '- unregister failed:', describeError(err));
   });
 }
 

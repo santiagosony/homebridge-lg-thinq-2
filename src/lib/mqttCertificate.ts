@@ -2,6 +2,7 @@ import * as FS from 'fs';
 import * as Path from 'path';
 import forge from 'node-forge';
 import { URL } from 'url';
+import { describeError } from './errorFormat.js';
 
 export const ATS_ROOT_CA_URL = 'https://www.amazontrust.com/repository/AmazonRootCA1.pem';
 export const LG_ROOT_CA_URL = 'https://support.sectigo.com/sfc/servlet.shepherd/version/download/0683l00000G9fLm';
@@ -174,14 +175,23 @@ export function mqttCertificatePaths(mqttDir: string): MqttCertificatePaths {
   };
 }
 
-export async function writeIfChanged(path: string, content: string): Promise<void> {
+// The private key authenticates the plugin to LG's MQTT broker: only the Homebridge user may read it.
+export const MQTT_PRIVATE_FILE_MODE = 0o600;
+export const MQTT_DIRECTORY_MODE = 0o700;
+
+export async function writeIfChanged(path: string, content: string, mode?: number): Promise<void> {
   try {
     const existing = await FS.promises.readFile(path, 'utf8').catch(() => null);
     if (existing !== content) {
-      await FS.promises.writeFile(path, content, 'utf8');
+      await FS.promises.writeFile(path, content, { encoding: 'utf8', mode });
     }
   } catch (err) {
-    await FS.promises.writeFile(path, content, 'utf8');
+    await FS.promises.writeFile(path, content, { encoding: 'utf8', mode });
+  }
+
+  // `mode` only applies when the file is created; also fix files written by older versions.
+  if (mode !== undefined) {
+    await FS.promises.chmod(path, mode);
   }
 }
 
@@ -192,11 +202,12 @@ export async function writeMqttCertificateFiles(options: {
   certificatePem: string;
 }): Promise<MqttCertificatePaths> {
   const { mqttDir, rootCA, privateKey, certificatePem } = options;
-  await FS.promises.mkdir(mqttDir, { recursive: true });
+  await FS.promises.mkdir(mqttDir, { recursive: true, mode: MQTT_DIRECTORY_MODE });
+  await FS.promises.chmod(mqttDir, MQTT_DIRECTORY_MODE);
 
   const paths = mqttCertificatePaths(mqttDir);
   await writeIfChanged(paths.caPath, rootCA);
-  await writeIfChanged(paths.keyPath, privateKey);
+  await writeIfChanged(paths.keyPath, privateKey, MQTT_PRIVATE_FILE_MODE);
   await writeIfChanged(paths.certPath, certificatePem);
 
   return paths;
@@ -253,7 +264,7 @@ export async function retryMqttRegistration(options: {
       return true;
     } catch (err) {
       tried--;
-      logger.debug('mqtt err:', err);
+      logger.debug('mqtt err:', describeError(err));
       if (tried > 0) {
         logger.debug('Cannot start MQTT, retrying in 5s.');
         await delay(retryDelayMs);

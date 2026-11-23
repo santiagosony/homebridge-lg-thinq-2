@@ -187,9 +187,9 @@ export default class Oven extends BaseDevice {
     this.ovenService.getCharacteristic(this.platform.Characteristic.Active).onGet(this.onlineGet(() => this.ovenServiceActive())).onSet((value) => {
       const enabled = normalizeBoolean(value);
       if (!enabled) {
-        this.stopOven();
+        this.runInBackground(this.stopOven(), 'Stop command');
       } else {
-        this.sendOvenCommand();
+        this.runInBackground(this.sendOvenCommand(), 'Cooking command');
       }
     });
     this.ovenService
@@ -318,12 +318,12 @@ export default class Oven extends BaseDevice {
     this.ovenTimerService.getCharacteristic(Characteristic.Active).onGet(this.onlineGet(() => this.remainTime() !== 0 ? 1 : 0)).onSet((value) => {
       const enabled = normalizeBoolean(value);
       if (!enabled) {
-        this.stopOven();
+        this.runInBackground(this.stopOven(), 'Stop command');
         this.ovenTimerService.updateCharacteristic(Characteristic.Active, 0);
         this.ovenTimerService.updateCharacteristic(Characteristic.RemainingDuration, 0);
         this.ovenTimerService.updateCharacteristic(Characteristic.InUse, 0);
       } else {
-        this.sendOvenCommand();
+        this.runInBackground(this.sendOvenCommand(), 'Cooking command');
       }
     });
     this.ovenTimerService.setCharacteristic(Characteristic.InUse, this.remainTime() > 0 ? Characteristic.InUse.IN_USE : Characteristic.InUse.NOT_IN_USE);
@@ -354,12 +354,12 @@ export default class Oven extends BaseDevice {
       const enabled = normalizeBoolean(value);
       if (!enabled) {
         this.timerAlarmSec = 0;
-        this.sendTimerCommand(0);
+        this.runInBackground(this.sendTimerCommand(0), 'Timer command');
         this.ovenAlarmService.updateCharacteristic(Characteristic.Active, 0);
         this.ovenAlarmService.updateCharacteristic(Characteristic.RemainingDuration, 0);
         this.ovenAlarmService.updateCharacteristic(Characteristic.InUse, 0);
       } else {
-        this.sendTimerCommand(this.timerAlarmSec);
+        this.runInBackground(this.sendTimerCommand(this.timerAlarmSec), 'Timer command');
         this.ovenAlarmService.updateCharacteristic(Characteristic.Active, 1);
         this.ovenAlarmService.updateCharacteristic(Characteristic.RemainingDuration, this.timerAlarmSec);
         this.ovenAlarmService.updateCharacteristic(Characteristic.InUse, 1);
@@ -497,7 +497,7 @@ export default class Oven extends BaseDevice {
     }).onSet((value) => {
       const enabled = normalizeBoolean(value);
       if (enabled) {
-        this.stopOven();
+        this.runInBackground(this.stopOven(), 'Stop command');
       }
       setTimeout(() => {
         this.cancelSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
@@ -531,7 +531,7 @@ export default class Oven extends BaseDevice {
     }).onSet((value) => {
       const enabled = normalizeBoolean(value);
       if (enabled) {
-        this.sendOvenCommand();
+        this.runInBackground(this.sendOvenCommand(), 'Cooking command');
         setTimeout(() => {
           this.startOvenSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
         }, 1000);
@@ -634,7 +634,7 @@ export default class Oven extends BaseDevice {
       .onSet((value) => {
         const enabled = normalizeBoolean(value);
         if (!enabled) {
-          this.stopOven();
+          this.runInBackground(this.stopOven(), 'Stop command');
         } else {
           this.pauseUpdate = true;
         }

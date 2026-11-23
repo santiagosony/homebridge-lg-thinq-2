@@ -1,3 +1,5 @@
+import { describeError } from './errorFormat.js';
+
 export const MQTT_OFFLINE_RECONNECT_DELAY_MS = 60000;
 
 export type MqttRuntimeDevice = {
@@ -36,11 +38,13 @@ export function wireMqttDeviceEvents(options: {
     subscriptions,
     onMessage,
     reconnect,
-    scheduleReconnect = (handler, delayMs) => setTimeout(handler, delayMs),
+    scheduleReconnect = (handler, delayMs) => setTimeout(() => {
+      void handler();
+    }, delayMs),
   } = options;
 
   device.on('error', (err) => {
-    logger.error('mqtt err:', err);
+    logger.error('mqtt err:', describeError(err));
   });
 
   device.on('connect', () => {
@@ -57,7 +61,7 @@ export function wireMqttDeviceEvents(options: {
     try {
       parsedPayload = JSON.parse(payloadText);
     } catch (err) {
-      logger.error('mqtt message parse error:', err);
+      logger.error('mqtt message parse error:', describeError(err));
       logger.debug('mqtt invalid message received:', payloadText);
       return;
     }
@@ -72,7 +76,7 @@ export function wireMqttDeviceEvents(options: {
     logger.info('MQTT disconnected, retrying in 60 seconds!');
     scheduleReconnect(() => {
       reconnect().catch(err => {
-        logger.error('mqtt reconnect failed:', err);
+        logger.error('mqtt reconnect failed:', describeError(err));
       });
     }, MQTT_OFFLINE_RECONNECT_DELAY_MS);
   });

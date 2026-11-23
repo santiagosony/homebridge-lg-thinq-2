@@ -36,6 +36,7 @@ import {
   startThinQ1Monitor,
   startThinQ2Monitor,
 } from './platformMonitor.js';
+import { describeError } from './lib/errorFormat.js';
 
 /**
  * LGThinQHomebridgePlatform
@@ -98,7 +99,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
       });
     };
 
-    this.api.on('didFinishLaunching', async () => {
+    this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       didFinishLaunching();
     });
@@ -154,7 +155,7 @@ export class LGThinQHomebridgePlatform implements DynamicPlatformPlugin {
 
   private logDiscoveryError(err: any): void {
     this.log.error(err.message);
-    this.log.debug(err);
+    this.log.debug(describeError(err, { stack: true }));
   }
 
   /**

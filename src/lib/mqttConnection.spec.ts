@@ -4,6 +4,7 @@ import {
   MqttRuntimeDevice,
   wireMqttDeviceEvents,
 } from './mqttConnection.js';
+import { describeError } from './errorFormat.js';
 
 type HandlerMap = {
   error?: (err: unknown) => void;
@@ -69,7 +70,7 @@ describe('MQTT runtime event wiring', () => {
 
     device.handlers.error?.(error);
 
-    expect(logger.error).toHaveBeenCalledWith('mqtt err:', error);
+    expect(logger.error).toHaveBeenCalledWith('mqtt err:', describeError(error));
   });
 
   test('parses JSON messages and logs the raw payload', () => {
@@ -109,7 +110,7 @@ describe('MQTT runtime event wiring', () => {
     device.handlers.message?.('topic-a', Buffer.from('not-json'));
 
     expect(onMessage).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith('mqtt message parse error:', expect.any(SyntaxError));
+    expect(logger.error).toHaveBeenCalledWith('mqtt message parse error:', expect.stringMatching(/^SyntaxError: /));
     expect(logger.debug).toHaveBeenCalledWith('mqtt invalid message received:', 'not-json');
   });
 
@@ -190,6 +191,6 @@ describe('MQTT runtime event wiring', () => {
     await scheduledHandler?.();
     await Promise.resolve();
 
-    expect(logger.error).toHaveBeenCalledWith('mqtt reconnect failed:', reconnectError);
+    expect(logger.error).toHaveBeenCalledWith('mqtt reconnect failed:', describeError(reconnectError));
   });
 });

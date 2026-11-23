@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import axios, { Method } from 'axios';
 import { Logger } from 'homebridge';
 import { createNoopLogger } from './noopLogger.js';
+import { describeError } from './errorFormat.js';
 
 /**
  * ThinQ result codes returned for commands a device simply does not support
@@ -129,18 +130,23 @@ export class API {
         return await this.refreshNewToken().then(async () => {
           return await this.request(method, uri, data, true);
         }).catch((err) => {
-          this.logger.error('refresh new token error: ', err);
+          this.logger.error('refresh new token error: ', describeError(err));
           return {};
         });
       } else if (err instanceof ManualProcessNeeded) {
         // Handle manual process errors (e.g., new terms agreement)
-        this.logger.warn('Handling new term agreement... If you keep getting this message, ' + err.message);
+        this.logger.warn('LG asks to accept new terms. If you keep getting this message, ' + err.message);
         await this.auth.handleNewTerm(this.session.accessToken)
-          .then(() => {
-            this.logger.warn('LG new term agreement is accepted.');
+          .then((acceptedTerms) => {
+            if (acceptedTerms.length) {
+              this.logger.warn('Accepted new LG terms on behalf of your account so the plugin keeps working: '
+                + acceptedTerms.join(', ') + '. You can review them in the LG ThinQ app.');
+            } else {
+              this.logger.warn('LG asked for new terms, but none were pending for your account.');
+            }
           })
           .catch(err => {
-            this.logger.error(err);
+            this.logger.error(describeError(err));
           });
 
         if (!retry) {
@@ -168,7 +174,7 @@ export class API {
             this.logger.error(err.stack || 'No stack error');
           }
         } else {
-          this.logger.error('request error: ', err);
+          this.logger.error('request error: ', describeError(err));
         }
 
         return {};

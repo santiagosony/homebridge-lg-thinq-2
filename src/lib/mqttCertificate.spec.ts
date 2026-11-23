@@ -99,6 +99,42 @@ describe('MQTT certificate helpers', () => {
     await expect(FS.promises.readFile(paths.certPath, 'utf8')).resolves.toBe('certificate');
   });
 
+  const modeOf = async (path: string) => (await FS.promises.stat(path)).mode & 0o777;
+
+  // File modes are not enforced on Windows.
+  const testOnPosix = process.platform === 'win32' ? test.skip : test;
+
+  testOnPosix('keeps the MQTT private key and its folder private to the Homebridge user', async () => {
+    const mqttDir = Path.join(await makeTempDir(), 'mqtt');
+
+    const paths = await writeMqttCertificateFiles({
+      mqttDir,
+      rootCA: 'root-ca',
+      privateKey: 'private-key',
+      certificatePem: 'certificate',
+    });
+
+    expect(await modeOf(paths.keyPath)).toBe(0o600);
+    expect(await modeOf(mqttDir)).toBe(0o700);
+  });
+
+  testOnPosix('fixes the permissions of a private key written by an older version', async () => {
+    const mqttDir = await makeTempDir();
+    const paths = mqttCertificatePaths(mqttDir);
+    await FS.promises.chmod(mqttDir, 0o755);
+    await FS.promises.writeFile(paths.keyPath, 'private-key', { mode: 0o644 });
+
+    await writeMqttCertificateFiles({
+      mqttDir,
+      rootCA: 'root-ca',
+      privateKey: 'private-key',
+      certificatePem: 'certificate',
+    });
+
+    expect(await modeOf(paths.keyPath)).toBe(0o600);
+    expect(await modeOf(mqttDir)).toBe(0o700);
+  });
+
   test('requests an MQTT certificate with the formatted CSR body', async () => {
     const api = {
       getRequest: jest.fn(async (uri: string) => {
@@ -309,7 +345,7 @@ describe('MQTT certificate helpers', () => {
     expect(result).toBe(true);
     expect(register).toHaveBeenCalledTimes(3);
     expect(delay).toHaveBeenCalledTimes(2);
-    expect(logger.debug).toHaveBeenCalledWith('mqtt err:', expect.any(Error));
+    expect(logger.debug).toHaveBeenCalledWith('mqtt err:', expect.stringMatching(/^Error: /));
     expect(logger.debug).toHaveBeenCalledWith('Cannot start MQTT, retrying in 5s.');
     expect(logger.error).not.toHaveBeenCalled();
   });

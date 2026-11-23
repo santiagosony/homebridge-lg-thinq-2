@@ -6,6 +6,7 @@ import { Auth } from './lib/Auth.js';
 import { URL } from 'url';
 import * as readline from 'readline';
 import type { Logger } from 'homebridge';
+import { describeError } from './lib/errorFormat.js';
 
 const makeLogger = (): Logger => (console as unknown as Logger);
 
@@ -49,7 +50,7 @@ program
       console.info('Your refresh_token:', session.refreshToken);
     } catch (err) {
 
-      console.error(err);
+      console.error(describeError(err));
     }
 
     process.exit(0);
@@ -113,7 +114,7 @@ program
       console.info('Your refresh_token:', session.refreshToken);
     } catch (err) {
 
-      console.error(err);
+      console.error(describeError(err));
     }
 
     process.exit(0);

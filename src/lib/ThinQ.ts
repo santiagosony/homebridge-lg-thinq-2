@@ -22,6 +22,7 @@ import {
   unregisterThinQ1WorkId,
   WorkIdRegistry,
 } from './thinq1Monitor.js';
+import { describeError } from './errorFormat.js';
 
 export type WorkId = string;
 
@@ -126,7 +127,7 @@ export class ThinQ {
     const data = Helper.prepareControlData(device, key, value);
 
     return this.api.thinq1PostRequest('rti/rtiControl', data).catch(err => {
-      this.logger.error('Unknown Error: ', err);
+      this.logger.error('Unknown Error: ', describeError(err));
     });
   }
 

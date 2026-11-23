@@ -122,7 +122,7 @@ export default class Microwave extends BaseDevice {
       .onSet((value) => {
         this.ventSpeed = value as number;
         if (this.ventSpeed !== snapshotNumber(this.Status.data, 'mwoVentSpeedLevel')) {
-          this.sendLightVentCommand();
+          this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
         }
       });
     this.serviceHood.getCharacteristic(Characteristic.RotationSpeed).onGet(this.onlineGet(() => {
@@ -130,7 +130,7 @@ export default class Microwave extends BaseDevice {
       return this.ventSpeed;
     })).onSet((value) => {
       this.ventSpeed = value as number;
-      this.sendLightVentCommand();
+      this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
     });
     this.serviceHood.getCharacteristic(Characteristic.RotationSpeed)
       .setProps({
@@ -147,10 +147,10 @@ export default class Microwave extends BaseDevice {
       const enabled = normalizeBoolean(value);
       if (!enabled) {
         this.lampLevel = 0;
-        this.sendLightVentCommand();
+        this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
       } else {
         this.lampLevel = 2;
-        this.sendLightVentCommand();
+        this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
       }
     }).onGet(this.onlineGet(() => hasNonZeroSnapshotNumber(this.Status.data, 'mwoLampLevel')));
     this.serviceLight.getCharacteristic(Characteristic.Brightness).onGet(this.onlineGet(() => {
@@ -159,7 +159,7 @@ export default class Microwave extends BaseDevice {
     })).onSet((value) => {
       this.lampLevel = value as number;
       if (this.lampLevel !== snapshotNumber(this.Status.data, 'mwoLampLevel')) {
-        this.sendLightVentCommand();
+        this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
       }
     });
     this.serviceLight.getCharacteristic(Characteristic.Brightness)
@@ -182,7 +182,7 @@ export default class Microwave extends BaseDevice {
             || hasNonZeroSnapshotNumber(this.Status.data, 'mwoLampLevel')) {
           this.lampLevel = 0;
           this.ventSpeed = 0;
-          this.sendLightVentCommand();
+          this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
         }
 
         setTimeout(() => {
@@ -227,7 +227,7 @@ export default class Microwave extends BaseDevice {
       const enabled = normalizeBoolean(value);
       if (!enabled) {
         if (isInitialCookingState(this.Status.data, 'LWOState')) {
-          this.stopOven();
+          this.runInBackground(this.stopOven(), 'Stop command');
           this.timeOut = 1500;
           setTimeout(() => {
             this.timeOut = 0;
@@ -238,14 +238,14 @@ export default class Microwave extends BaseDevice {
               || hasNonZeroSnapshotNumber(this.Status.data, 'mwoLampLevel')) {
             this.lampLevel = 0;
             this.ventSpeed = 0;
-            this.sendLightVentCommand();
+            this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
           }
         }, this.timeOut);
       } else {
         if (snapshotNumber(this.Status.data, 'mwoVentSpeedLevel') === 0 || snapshotNumber(this.Status.data, 'mwoLampLevel') === 0) {
           this.lampLevel = 2;
           this.ventSpeed = 2;
-          this.sendLightVentCommand();
+          this.runInBackground(this.sendLightVentCommand(), 'Light and vent command');
         }
       }
     });
@@ -599,12 +599,12 @@ export default class Microwave extends BaseDevice {
     this.ovenTimerService.getCharacteristic(Characteristic.Active).onGet(this.onlineGet(() => this.remainTime() !== 0 ? 1 : 0)).onSet((value) => {
       const enabled = normalizeBoolean(value);
       if (!enabled) {
-        this.stopOven();
+        this.runInBackground(this.stopOven(), 'Stop command');
         this.ovenTimerService.updateCharacteristic(Characteristic.Active, 0);
         this.ovenTimerService.updateCharacteristic(Characteristic.RemainingDuration, 0);
         this.ovenTimerService.updateCharacteristic(Characteristic.InUse, 0);
       } else {
-        this.sendOvenCommand();
+        this.runInBackground(this.sendOvenCommand(), 'Cooking command');
       }
     });
     this.ovenTimerService.setCharacteristic(Characteristic.InUse, this.remainTime() > 0 ? Characteristic.InUse.IN_USE : Characteristic.InUse.NOT_IN_USE);
@@ -635,12 +635,12 @@ export default class Microwave extends BaseDevice {
       const enabled = normalizeBoolean(value);
       if (!enabled) {
         this.timerAlarmSec = 0;
-        this.sendTimerCommand(0);
+        this.runInBackground(this.sendTimerCommand(0), 'Timer command');
         this.ovenAlarmService.updateCharacteristic(Characteristic.Active, 0);
         this.ovenAlarmService.updateCharacteristic(Characteristic.RemainingDuration, 0);
         this.ovenAlarmService.updateCharacteristic(Characteristic.InUse, 0);
       } else {
-        this.sendTimerCommand(this.timerAlarmSec);
+        this.runInBackground(this.sendTimerCommand(this.timerAlarmSec), 'Timer command');
         this.ovenAlarmService.updateCharacteristic(Characteristic.Active, 1);
         this.ovenAlarmService.updateCharacteristic(Characteristic.RemainingDuration, this.timerAlarmSec);
         this.ovenAlarmService.updateCharacteristic(Characteristic.InUse, 1);
@@ -836,7 +836,7 @@ export default class Microwave extends BaseDevice {
     }).onSet((value) => {
       const enabled = normalizeBoolean(value);
       if (enabled) {
-        this.stopOven();
+        this.runInBackground(this.stopOven(), 'Stop command');
       }
       setTimeout(() => {
         this.cancelSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
@@ -853,7 +853,7 @@ export default class Microwave extends BaseDevice {
     }).onSet((value) => {
       const enabled = normalizeBoolean(value);
       if (enabled) {
-        this.sendOvenCommand();
+        this.runInBackground(this.sendOvenCommand(), 'Cooking command');
         setTimeout(() => {
           this.startOvenSwitch.updateCharacteristic(this.platform.Characteristic.On, false);
         }, 1000);
@@ -882,7 +882,7 @@ export default class Microwave extends BaseDevice {
       .onSet((value) => {
         const enabled = normalizeBoolean(value);
         if (!enabled) {
-          this.stopOven();
+          this.runInBackground(this.stopOven(), 'Stop command');
         } else {
           this.pauseUpdate = true;
         }

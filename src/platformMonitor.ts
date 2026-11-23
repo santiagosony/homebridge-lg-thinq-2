@@ -5,6 +5,7 @@ import { ManualProcessNeeded } from './errors/index.js';
 import type { Device } from './lib/Device.js';
 import { PlatformType } from './lib/constants.js';
 import type { ThinQ } from './lib/ThinQ.js';
+import { describeError } from './lib/errorFormat.js';
 
 export type MonitorInterval = ReturnType<typeof setInterval>;
 export type MonitorThinQ = Pick<ThinQ, 'devices' | 'pollMonitor' | 'registerMQTTListener'>;
@@ -111,7 +112,7 @@ export async function startThinQ2Monitor(options: {
   const { log, thinq, events, intervalTime, monitorIntervals } = options;
   const thinq2Interval = setInterval(() => {
     pollThinQ2Devices({ thinq, events }).catch(err => {
-      log.debug('ThinQ2 polling failed:', err);
+      log.debug('ThinQ2 polling failed:', describeError(err));
     });
   }, intervalTime);
   monitorIntervals.push(thinq2Interval);
@@ -149,22 +150,20 @@ export function startThinQ1Monitor(options: {
     : intervalTime / 1000;
 
   log.info('Start polling device data every ' + refreshSeconds + ' seconds.');
-  const interval = setInterval(async () => {
-    try {
-      await pollThinQ1Accessories({
-        thinq,
-        accessories,
-        events,
-        enableThinQ1,
-      });
-    } catch (err) {
+  const interval = setInterval(() => {
+    pollThinQ1Accessories({
+      thinq,
+      accessories,
+      events,
+      enableThinQ1,
+    }).catch(err => {
       handleThinQ1PollError({
         err,
         log,
         interval,
         monitorIntervals,
       });
-    }
+    });
   }, intervalTime);
   monitorIntervals.push(interval);
 }

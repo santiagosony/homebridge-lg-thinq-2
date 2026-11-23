@@ -45,4 +45,20 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    // Type-aware rules for the plugin code. A promise that rejects without a handler
+    // is an unhandled rejection, which makes Homebridge shut down.
+    files: ['src/**/*.ts'],
+    ignores: ['src/**/*.spec.ts', 'src/**/__tests__/**'],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
+  },
 );

@@ -9,6 +9,7 @@ import { BROWSER_USER_AGENT, requestClient } from './request.js';
 import { Session } from './Session.js';
 import { Logger } from 'homebridge';
 import { createNoopLogger } from './noopLogger.js';
+import { describeError } from './errorFormat.js';
 
 function recordValue(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' ? value as Record<string, unknown> : null;
@@ -255,9 +256,17 @@ export class Auth {
    *
    * @param accessToken - The access token for the session.
    */
-  public async handleNewTerm(accessToken: string) {
+  /**
+   * Accepts the LG terms that the account has not accepted yet, which LG requires
+   * before it answers API requests again.
+   *
+   * @returns The accepted terms as `type:id:language` entries; empty if none were pending.
+   */
+  public async handleNewTerm(accessToken: string): Promise<string[]> {
     const showTermUrl = 'common/showTerms?callback_url=lgaccount.lgsmartthinq:/updateTerms'
-      + '&country=VN&language=en-VN&division=ha:T20&terms_display_type=3&svc_list=SVC202';
+      + '&country=' + encodeURIComponent(this.gateway.country_code)
+      + '&language=' + encodeURIComponent(this.gateway.language_code)
+      + '&division=ha:T20&terms_display_type=3&svc_list=SVC202';
     const showTermHtml = await requestClient.get(this.gateway.login_base_url + showTermUrl, {
       headers: {
         'X-Login-Session': accessToken,
@@ -285,18 +294,20 @@ export class Auth {
       return res.data.info.terms;
     });
 
-    const newTermAgreeNeeded = infoTerms.filter((term: any) => {
+    const newTerms: string[] = infoTerms.filter((term: any) => {
       return accountTerms.indexOf(term.termsID) === -1;
     }).map((term: any) => {
       return [term.termsType, term.termsID, term.defaultLang].join(':');
-    }).join(',');
+    });
 
-    if (newTermAgreeNeeded) {
+    if (newTerms.length) {
       const updateAccountTermUrl = 'emp/v2.0/account/user/terms';
-      await requestClient.post(this.gateway.emp_base_url + updateAccountTermUrl, qs.stringify({ terms: newTermAgreeNeeded }), {
+      await requestClient.post(this.gateway.emp_base_url + updateAccountTermUrl, qs.stringify({ terms: newTerms.join(',') }), {
         headers,
       });
     }
+
+    return newTerms;
   }
 
   /**
@@ -333,7 +344,7 @@ export class Auth {
             + ' maybe new agreement need your accept. Then try restarting Homebridge.'
             : err.message,
         );
-        this.logger.debug(err);
+        this.logger.debug(describeError(err, { stack: true }));
         this.logger.info('Failed to login to old thinq v1 gateway. See debug logs for more details. Continuing anyways.');
       });
   }
