@@ -94,7 +94,8 @@ describe('Auth', () => {
         loginSessionID: 'session123',
       },
     };
-    const mockSecretKeyResponse = { returnData: 'mockSecretKey' };
+    // Made-up base64 signature from LG's sign-in service.
+    const mockSignature = 'c2lnbmF0dXJlLWZyb20tbGc=';
     const mockAuthorizeResponse = {
       status: 1,
       redirect_uri: 'https://example.com/oauth?code=mockCode',
@@ -119,15 +120,45 @@ describe('Auth', () => {
       .mockResolvedValueOnce({ data: mockAccountResponse }) // Mock account response
       .mockResolvedValueOnce({ data: mockTokenResponse }); // Mock token response
 
-    jest.spyOn(requestClient, 'get')
-      .mockResolvedValueOnce({ data: mockSecretKeyResponse }) // Mock secret key response
+    const getSpy = jest.spyOn(requestClient, 'get')
+      .mockResolvedValueOnce({ data: `${mockSignature}\n` }) // Mock LG signature service response
       .mockResolvedValueOnce({ data: mockAuthorizeResponse }); // Mock authorize response
 
     const session = await auth.loginStep2('testUser', 'mockEncryptedPassword');
+
+    // The EMP session request is signed by LG's sign-in service, not with a secret fetched by the client.
+    const signatureUrl = new URL(getSpy.mock.calls[0][0] as string);
+    expect(signatureUrl.origin + signatureUrl.pathname).toBe('https://example.com/spx/signature');
+    expect(signatureUrl.searchParams.get('kind')).toBe('oauth2');
+    expect(signatureUrl.searchParams.get('key_name')).toBe('OAUTH_SECRETKEY');
+    expect(signatureUrl.searchParams.get('sever_type')).toBe('OP');
+    expect(signatureUrl.searchParams.get('timestamp')).toMatch(/^\/emp\/oauth2\/authorize\/empsession\?.+\n.+ \+0000$/);
+    const authorizeOptions = getSpy.mock.calls[1][1] as { headers: Record<string, string> };
+    expect(authorizeOptions.headers['lgemp-x-signature']).toBe(mockSignature);
+    expect(String(getSpy.mock.calls[1][0])).toContain('/emp/oauth2/authorize/empsession?');
+
     expect(session).toBeInstanceOf(Session);
     expect(session.accessToken).toBe('accessToken');
     expect(session.refreshToken).toBe('refreshToken');
     expect(session.hasValidToken()).toBe(true);
+  });
+
+  test('rejects a response from the LG signature service that is not a signature', async () => {
+    jest.spyOn(auth['gateway'], 'login_base_url', 'get').mockReturnValue('https://example.com/spx/');
+    const requestClient = require('./request').requestClient;
+    jest.spyOn(requestClient, 'get').mockResolvedValueOnce({ data: '<html><body>Service Unavailable</body></html>' });
+
+    await expect(auth.requestEmpSignature('/emp/oauth2/authorize/empsession?a=1\nMon, 23 Nov 2026 00:00:00 GMT'))
+      .rejects.toThrow('LG OAuth signature request failed: unexpected response from the LG sign-in service.');
+  });
+
+  test('reports a failed request to the LG signature service', async () => {
+    jest.spyOn(auth['gateway'], 'login_base_url', 'get').mockReturnValue('https://example.com/spx/');
+    const requestClient = require('./request').requestClient;
+    jest.spyOn(requestClient, 'get').mockRejectedValueOnce({ response: { status: 404, data: {} }, message: 'Request failed with status code 404' });
+
+    await expect(auth.requestEmpSignature('message')).rejects.toThrow(AuthenticationError);
+    await expect(auth.requestEmpSignature('message')).rejects.toThrow('LG OAuth signature request failed');
   });
 
   test('should refresh tokens using expires_in as a duration', async () => {

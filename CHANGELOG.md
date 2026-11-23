@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.0.17
+
+### Login
+
+* Fixed LG account sign-in failing with `LG OAuth key lookup failed: Request failed with status code 404`. LG removed the `searchKey` endpoint, which returned the secret used to sign the sign-in request, and now signs that request on its own server, as LG's sign-in page does. The plugin now asks LG's sign-in service for the signature and checks that the answer is a signature. The same approach was first used in the [@rnikoopour/homebridge-lg-thinq](https://www.npmjs.com/package/@rnikoopour/homebridge-lg-thinq) and [@robotpool/homebridge-lg-thinq](https://www.npmjs.com/package/@robotpool/homebridge-lg-thinq) forks.
+* Documented the error in the README troubleshooting table.
+
 ## v2.0.16
 
 ### Dependencies

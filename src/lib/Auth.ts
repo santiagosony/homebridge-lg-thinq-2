@@ -59,6 +59,9 @@ export function authErrorMessage(err: unknown, fallback: string): string {
     || fallback;
 }
 
+// A base64 HMAC signature, as returned by LG's sign-in service (28 characters for HMAC-SHA1).
+const EMP_SIGNATURE_PATTERN = /^[A-Za-z0-9+/]{16,128}={0,2}$/;
+
 export const SIGN_IN_UNLOCK_MESSAGE = 'LG has locked sign-in for this account and asks to unlock it '
   + '(LG message: "Need Sign-In Unlock"). This usually happens after several failed sign-ins or a sign-in '
   + 'from a new device. Sign in to the LG ThinQ app or to your LG account on the LG website and complete '
@@ -168,13 +171,6 @@ export class Auth {
       throw new AuthenticationError(message);
     });
 
-    // dynamic get secret key for emp signature
-    const empSearchKeyUrl = this.gateway.login_base_url + 'searchKey?key_name=OAUTH_SECRETKEY&sever_type=OP';
-    const secretKey = await requestClient.get(empSearchKeyUrl).then(res => res.data).then(data => data.returnData)
-      .catch(err => {
-        throw authError('LG OAuth key lookup failed', err);
-      });
-
     const timestamp = DateTime.utc().toRFC2822();
     const empData = {
       account_type: account.userIDType,
@@ -186,7 +182,7 @@ export class Auth {
       username: account.userID,
     };
     const empUrl = new URL('https://emp-oauth.lgecloud.com/emp/oauth2/authorize/empsession?' + qs.stringify(empData));
-    const signature = this.signature(`${empUrl.pathname}${empUrl.search}\n${timestamp}`, secretKey);
+    const signature = await this.requestEmpSignature(`${empUrl.pathname}${empUrl.search}\n${timestamp}`);
     const empHeaders = {
       'lgemp-x-app-key': constants.OAUTH_CLIENT_KEY,
       'lgemp-x-date': timestamp,
@@ -482,6 +478,39 @@ export class Auth {
    * @param secret - The secret key used for signing.
    * @returns The generated signature.
    */
+  /**
+   * Has LG's sign-in service sign an EMP OAuth request.
+   *
+   * LG removed the `searchKey` endpoint, which returned the signing secret to the
+   * client (it answers HTTP 404 in every region), and now signs the message on its
+   * server, as LG's own sign-in page does. The parameters, including LG's
+   * `sever_type` spelling, are the ones that page sends.
+   *
+   * @param message - The request path and query, a new line, and the RFC 2822 date.
+   * @returns The base64 HMAC signature for the `lgemp-x-signature` header.
+   */
+  public async requestEmpSignature(message: string): Promise<string> {
+    const signatureUrl = this.gateway.login_base_url + 'signature?' + qs.stringify({
+      kind: 'oauth2',
+      timestamp: message,
+      key_name: 'OAUTH_SECRETKEY',
+      sever_type: 'OP',
+    });
+    const body = await requestClient.get(signatureUrl, {
+      headers: { 'Accept': 'text/plain, */*' },
+      responseType: 'text',
+      transformResponse: [(data: unknown) => data],
+    }).then(res => res.data).catch(err => {
+      throw authError('LG OAuth signature request failed', err);
+    });
+
+    const signature = typeof body === 'string' ? body.trim() : '';
+    if (!EMP_SIGNATURE_PATTERN.test(signature)) {
+      throw new AuthenticationError('LG OAuth signature request failed: unexpected response from the LG sign-in service.');
+    }
+    return signature;
+  }
+
   protected signature(message: string, secret: string) {
     return crypto.createHmac('sha1', Buffer.from(secret)).update(message).digest('base64');
   }

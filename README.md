@@ -219,6 +219,7 @@ Turn on Homebridge **debug mode** (Homebridge UI → Settings) to see detailed l
 
 | Problem | What to do |
 | --- | --- |
+| `LG OAuth key lookup failed: Request failed with status code 404` | LG removed the sign-in step this message comes from. Update to version `2.0.17` or later. |
 | `LG pre-login failed: Request failed with status code 403` | LG rejected the login request. Update to version `2.0.3` or later. |
 | `Request failed with status code 429` or result code `9012` | LG received too many requests. Update to version `2.0.6` or later, and do not set a low `refresh_interval`. |
 | `LG has locked sign-in for this account` (LG message `Need Sign-In Unlock`) | LG locked sign-in, usually after several failed sign-ins or a sign-in from a new device. Sign in to the LG ThinQ app or to your LG account on the LG website and complete the verification LG asks for, then try again. Or get a refresh token with [`thinq auth`](#command-line-tool), which uses LG's sign-in page. |
