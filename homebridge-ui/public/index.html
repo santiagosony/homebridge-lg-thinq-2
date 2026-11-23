@@ -290,7 +290,19 @@
             </div>
             <div aria-labelledby="headingTwo" class="collapse" id="collapseTwo">
                 <div class="card-body">
-                    <p>Use the <a href="https://github.com/nVuln/homebridge-lg-thinq/wiki/Plugin-Authorization-Setting"><b>Plugin Authorization Setting</b></a> guide for other login methods.</p>
+                    <p>
+                        If you sign in to LG with Google, Apple, or Facebook, or prefer not to enter your password here,
+                        get a refresh token with the <code>thinq</code> command and paste it below. The
+                        <a href="https://github.com/santiagosony/homebridge-lg-thinq-2#other-sign-in-methods" target="_blank" rel="noopener noreferrer"><b>Other sign-in methods</b></a>
+                        guide explains how.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label" for="refreshTokenInput">Refresh token</label>
+                        <input autocomplete="off" class="form-control" id="refreshTokenInput" spellcheck="false" type="password">
+                    </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-primary" id="useTokenButton" type="button">Use Token</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -349,6 +361,18 @@
 
   function requestErrorMessage(error, fallback) {
     return error?.error || error?.message || fallback;
+  }
+
+  // Stores a refresh token in the config and shows the settings, as after a successful login.
+  async function applyRefreshToken(configuration, refreshToken) {
+    configuration.auth_mode = 'token';
+    configuration.refresh_token = refreshToken;
+    await homebridge.updatePluginConfig([configuration]);
+    homebridge.enableSaveButton();
+
+    await renderConfigForm(configuration, { hideDevices: true });
+    hideElement(byId('loginForm'));
+    showSaveNotice();
   }
 
   function setLoginButtonLoading(btn, label) {
@@ -688,6 +712,26 @@
       await homebridge.updatePluginConfig([configuration]);
     });
 
+    byId('useTokenButton').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const refreshToken = byId('refreshTokenInput').value.trim();
+      if (!refreshToken) {
+        homebridge.toast.error('Paste the refresh token from the thinq command first.', 'Error');
+        return;
+      }
+
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      try {
+        await applyRefreshToken(configuration, refreshToken);
+        byId('refreshTokenInput').value = '';
+      }
+      catch (error) {
+        homebridge.toast.error(requestErrorMessage(error, 'Unable to save the refresh token.'), 'Error');
+        btn.disabled = false;
+      }
+    });
+
     byId('getTokenButton').addEventListener('click', async (e) => {
       e.preventDefault();
       const username = byId('usernameInput').value;
@@ -710,7 +754,6 @@
             resetLoginButton(btn);
           }
           else {
-            configuration.refresh_token = data.token;
             if (byId('rememberUsername').checked) {
               configuration.username = username;
               configuration.password = password;
@@ -720,12 +763,7 @@
               configuration.password = '';
             }
 
-            await homebridge.updatePluginConfig([configuration]);
-            homebridge.enableSaveButton();
-
-            await renderConfigForm(configuration, { hideDevices: true });
-            hideElement(byId('loginForm'));
-            showSaveNotice();
+            await applyRefreshToken(configuration, data.token);
             btn.disabled = true;
             btn.textContent = 'Get Token';
           }

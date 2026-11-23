@@ -108,7 +108,30 @@ The device cache is stored in a new folder, so the first start can take a little
 
 If no devices are listed in the configuration, all supported devices in the LG account are added. Add device entries only to rename devices, change device options, or add only some devices.
 
-If you sign in to LG with Google, Apple, or another external account, get the refresh token with the [`thinq auth`](#command-line-tool) command or follow the [Plugin Authorization Setting](https://github.com/nVuln/homebridge-lg-thinq/wiki/Plugin-Authorization-Setting) guide of the original project.
+If you sign in to LG with Google, Apple, or Facebook, or the sign-in does not work for your account, see [Other sign-in methods](#other-sign-in-methods).
+
+### Other sign-in methods
+
+#### Get a refresh token with the `thinq` command
+
+The command opens LG's own sign-in page, so it works with Google, Apple, and Facebook accounts, and with any verification LG asks for. You need Node.js 22 or later on any computer.
+
+1. Run the command with your account's country and language, for example for Spain:
+
+   ```sh
+   npx -y -p homebridge-lg-thinq-2 thinq -c ES -l es-ES auth
+   ```
+
+2. Open the link that the command prints, and sign in to LG.
+3. When the sign-in finishes, the browser goes to a page that may be blank or show an error. Copy the full address from the address bar and paste it in the terminal.
+4. The command prints `Your refresh_token: ...`.
+5. In the plugin settings, open **Other login methods**, paste the token, and click **Use Token**. Then click **Save** and restart Homebridge.
+
+Keep the refresh token private: it gives access to your LG devices.
+
+#### Use a second LG account
+
+Accounts created with Google, Apple, or Facebook have no password that the plugin can use. Create a second LG account with an email and password, share your home with it from the LG ThinQ app, and sign in with that account in the plugin settings. LG treats it as a separate account, even with the same email address.
 
 ### Manual configuration
 

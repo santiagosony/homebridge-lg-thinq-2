@@ -1,5 +1,17 @@
 # Change Log
 
+## v2.0.18
+
+### Homebridge UI
+
+* The guide link in **Other login methods** now opens in a new browser tab. It opened inside the settings window, where GitHub refuses to be shown ("This content is blocked").
+* The link now goes to a new [Other sign-in methods](README.md#other-sign-in-methods) section of the README instead of the original project's wiki, which told users to install the original package.
+* **Other login methods** has a field to paste a refresh token from the `thinq` command and use it, instead of editing the config JSON.
+
+### Documentation
+
+* Added the Other sign-in methods section to the README: getting a refresh token with `npx -y -p homebridge-lg-thinq-2 thinq ... auth` (works with Google, Apple, and Facebook accounts), and using a second LG account.
+
 ## v2.0.17
 
 ### Login
