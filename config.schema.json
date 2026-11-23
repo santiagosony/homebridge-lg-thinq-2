@@ -5,6 +5,12 @@
   "customUi": true,
   "strictValidation": false,
   "schema": {
+    "name": {
+      "title": "Name",
+      "type": "string",
+      "default": "LGThinQ",
+      "description": "Prefix of this plugin in the Homebridge log. The Plugin Logs window shows the log lines with this prefix."
+    },
     "auth_mode": {
       "title": "Auth Mode",
       "type": "string",

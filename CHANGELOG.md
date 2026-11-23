@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.0.15
+
+### Homebridge UI
+
+* Fixed the **Plugin Logs** window of the Homebridge UI always being empty. It shows the log lines whose prefix is the platform `name` in the config, and without a `name` it looked for `homebridge-lg-thinq-2`, while Homebridge prefixes this plugin's lines with `LGThinQ`. The config now has `"name": "LGThinQ"` by default: the settings screen adds it to existing configs (click **Save** once), and the README examples include it. Verified in Homebridge UI 5.30.1.
+
 ## v2.0.14
 
 ### Reliability

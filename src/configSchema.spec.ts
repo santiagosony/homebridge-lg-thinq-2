@@ -6,7 +6,8 @@ type SchemaProperty = { type?: string; properties?: Record<string, SchemaPropert
 type LayoutItem = string | { key?: string; items?: LayoutItem[]; condition?: { functionBody?: string } };
 
 const schema = JSON.parse(readFileSync(join(process.cwd(), 'config.schema.json'), 'utf8')) as {
-  schema: Record<string, SchemaProperty>;
+  pluginAlias: string;
+  schema: Record<string, SchemaProperty & { default?: unknown }>;
   layout: LayoutItem[];
 };
 
@@ -17,6 +18,13 @@ function conditionBodies(items: LayoutItem[] = []): string[] {
 }
 
 describe('config.schema.json', () => {
+  test('defaults the platform name to the platform alias, so Plugin Logs finds the log lines', () => {
+    // Homebridge prefixes the log lines with the config "name" (or the alias without one),
+    // and the Homebridge UI's Plugin Logs window shows only the lines with that prefix.
+    expect(schema.schema.name).toMatchObject({ type: 'string', default: schema.pluginAlias });
+    expect(schema.pluginAlias).toBe('LGThinQ');
+  });
+
   const deviceProperties = schema.schema.devices.items?.properties ?? {};
   const deviceConditions = conditionBodies(schema.layout).filter(body => body.includes('model.devices[arrayIndices]'));
 

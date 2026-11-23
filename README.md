@@ -117,6 +117,7 @@ Add the platform to the `platforms` section of your Homebridge `config.json`:
 ```json
 {
   "platform": "LGThinQ",
+  "name": "LGThinQ",
   "auth_mode": "token",
   "refresh_token": "refresh-token-from-lg-login",
   "country": "US",
@@ -130,6 +131,7 @@ To add only some devices, or to set device options, list the devices by id:
 ```json
 {
   "platform": "LGThinQ",
+  "name": "LGThinQ",
   "auth_mode": "token",
   "refresh_token": "refresh-token-from-lg-login",
   "country": "US",
@@ -151,6 +153,7 @@ Device ids are shown in the Homebridge log when the plugin discovers devices.
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
 | `platform` | Yes | | Must be `LGThinQ`. |
+| `name` | No | `LGThinQ` | Prefix of this plugin in the Homebridge log. The **Plugin Logs** window of the Homebridge UI shows the log lines with this prefix, so it stays empty without a name. The settings screen adds it. |
 | `auth_mode` | Yes | `account` | `token` to sign in with a refresh token, or `account` to sign in with username and password. |
 | `refresh_token` | With `token` | | Refresh token from the LG login (Homebridge UI or `thinq` command). |
 | `username` | With `account` | | LG ThinQ account username. |

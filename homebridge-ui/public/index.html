@@ -303,6 +303,7 @@
 
 <script>
   const homebridge = window.homebridge;
+  const DEFAULT_PLATFORM_NAME = 'LGThinQ';
   let configForm;
 
   const byId = (id) => document.getElementById(id);
@@ -652,6 +653,14 @@
         pluginConfig.push({});
       }
       configuration = pluginConfig[0];
+
+      // Homebridge prefixes this plugin's log lines with the config "name", and the
+      // Plugin Logs window only shows the lines with that prefix. Without a name the
+      // window looks for the package name and shows nothing, so add the default one.
+      if (!configuration.name) {
+        configuration.name = DEFAULT_PLATFORM_NAME;
+        await homebridge.updatePluginConfig([configuration]);
+      }
 
       let optionSelected = findCountryLanguageOption(configuration.country, configuration.language);
       if (!optionSelected) {
