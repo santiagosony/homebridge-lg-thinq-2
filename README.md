@@ -294,7 +294,8 @@ npm test
 | --- | --- |
 | `npm run build` | Compiles TypeScript from `src/` to `dist/`. |
 | `npm run lint` | Runs ESLint with no warnings allowed. |
-| `npm test` | Runs the Jest test suite. Some tests call the LG servers and need internet access. |
+| `npm test` | Runs the Jest test suite. It runs offline: tests use made-up LG answers and cannot connect to outside servers. |
+| `npm run test:coverage` | Runs the tests with a coverage report, and fails if coverage drops below the thresholds in `jest.config.ts`. |
 | `npm run watch` | Builds, links the plugin into your local Homebridge, and rebuilds on changes. |
 
 ### Releases

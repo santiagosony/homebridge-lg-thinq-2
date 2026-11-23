@@ -1,5 +1,19 @@
 # Change Log
 
+## Unreleased
+
+These changes do not change the plugin, so they are not published on their own; they are part of the next release.
+
+### Tests
+
+* The tests no longer depend on LG servers. The API tests use made-up LG answers, and a test setup file makes any connection to an outside server fail at once, naming the host. Before, CI could fail whenever LG was slow or limited requests, and the tests could not run without access to LG.
+* New tests for the LG API client: the gateway lookup, sign-in and token refresh, repeating a request after the token expires or LG asks to accept new terms, device lists and commands, ThinQ1 monitoring, and error logging. Its test coverage went from about 67% to 99%.
+* CI now runs the tests with coverage and enforces higher thresholds, so coverage cannot drop without notice.
+
+### Contributing
+
+* Updated the README and CONTRIBUTING with how the offline tests work.
+
 ## v2.0.19
 
 ### Homebridge UI

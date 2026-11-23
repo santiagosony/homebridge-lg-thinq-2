@@ -39,10 +39,10 @@ The `sample/` folder has anonymized device data from the LG API, useful to write
    ```sh
    npm run lint
    npm run build
-   npm test
+   npm run test:coverage
    ```
 
-   Some tests in `src/lib/API.spec.ts` call the LG servers and fail without internet access to them. The other tests run offline.
+   The tests run offline. They must not depend on LG servers: [`test/blockNetwork.ts`](test/blockNetwork.ts) makes any connection to an outside server fail, so fake LG's answers instead (see `fakeLg` in `src/lib/API.spec.ts`). The coverage check fails if coverage drops below the thresholds in `jest.config.ts`.
 
 5. Add a short entry to `CHANGELOG.md` describing the change for users.
 6. Open a pull request and fill in the template.

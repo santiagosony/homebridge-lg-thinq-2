@@ -17,6 +17,8 @@ export default {
   ],
   coverageProvider: 'v8',
   testEnvironment: 'node',
+  // Blocks connections to outside servers, so no test depends on LG being reachable.
+  setupFiles: ['<rootDir>/test/blockNetwork.ts'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
@@ -39,11 +41,14 @@ export default {
     '^(..?/.+).js?$': '$1',
   },
   coverageThreshold: {
+    // Just below the current coverage, so it cannot drop without notice. Node.js 22
+    // counts fewer lines and more functions as covered than Node.js 24 and 26 (V8
+    // coverage changed), so each number is below the lowest of the three.
     global: {
-      branches: 45,
-      functions: 19,
-      lines: 20,
-      statements: 20,
+      branches: 80,
+      functions: 50,
+      lines: 40,
+      statements: 40,
     },
   },
 } satisfies Config;
