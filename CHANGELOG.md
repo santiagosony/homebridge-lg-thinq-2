@@ -1,5 +1,13 @@
 # Change Log
 
+## v2.0.16
+
+### Dependencies
+
+* Updated `commander` to 15.1.0 (used by the `thinq` command) and `@homebridge/plugin-ui-utils` to 2.3.0 (used by the settings screen). Both were checked: the `thinq` command behaves the same on Node.js 22, 24, and 26, and the settings screen works in Homebridge UI 5.30.1.
+* Updated the build and test tools (jest, ts-jest, rimraf, type definitions) and the GitHub Actions (`actions/checkout` 7.0.1, `actions/setup-node` 7.1.0). jest 30.5 brought a `minimatch` version with a moderate advisory through `test-exclude`; it is overridden to a fixed version, so `npm audit` still reports 0 vulnerabilities.
+* The Node.js type definitions now follow Node.js 22, the oldest supported version, so the code cannot use newer Node.js APIs by mistake. Dependabot no longer proposes major updates of them, nor TypeScript 7, which the test and lint tools do not support yet.
+
 ## v2.0.15
 
 ### Homebridge UI

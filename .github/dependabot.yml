@@ -8,6 +8,15 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    ignore:
+      # ts-jest and typescript-eslint do not support TypeScript 7 yet (peer ranges <7 and <6.1).
+      # Remove this rule once they do.
+      - dependency-name: typescript
+        versions: ['>=7']
+      # Node.js type definitions follow the oldest supported Node.js major (22, see engines in
+      # package.json), so code cannot use APIs that Node.js 22 does not have.
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
     groups:
       # Build and test tools in one pull request; they are not part of the published package.
       development-dependencies:
