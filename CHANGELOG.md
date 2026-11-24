@@ -1,6 +1,11 @@
 # Change Log
 
-## v2.0.20-beta.0
+## v2.0.20-beta.1
+
+### Homebridge UI
+
+* The settings choose the country and language of the LG account from the same list as the sign-in screen ("Argentina/Spanish"), instead of two text fields. Only combinations from the list can be chosen. The config keeps `country` and `language` as before.
+* Fixed a saved country and language that are not in the list (for example typed in the config JSON) being replaced by `US` and `en-US` when the settings opened, and then saved. They are now shown as they are, as "saved value, not in the list", and kept.
 
 ### Real-time updates (MQTT)
 

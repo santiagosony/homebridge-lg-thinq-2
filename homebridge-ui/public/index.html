@@ -309,6 +309,12 @@
     </div>
 </div>
 
+<div class="card card-body mb-3" style="display: none" id="accountRegion">
+    <label class="form-label" for="settingsCountryLanguage">Country and language of your LG account</label>
+    <select class="form-select w-100" id="settingsCountryLanguage"></select>
+    <div class="form-text">Must match the country of your LG account, as in the LG ThinQ app. If you change it, you may need to sign in again.</div>
+</div>
+
 <div class="alert alert-info" id="saveNotice" style="display: none">
     Click the Homebridge UI Save button to apply settings. Device configuration will load after restart.
 </div>
@@ -354,9 +360,39 @@
     });
   }
 
-  function findCountryLanguageOption(country, language) {
-    return Array.from(byId('country_language').options)
+  function findCountryLanguageOption(country, language, select = byId('country_language')) {
+    return Array.from(select.options)
       .find(option => option.dataset.country === country && option.dataset.language === language);
+  }
+
+  // Selects the saved country and language. A combination that is not in the list
+  // (for example typed in the config JSON) is added as its own option, so it is shown
+  // and kept as it is instead of being replaced.
+  function selectCountryLanguage(select, country, language) {
+    select.querySelectorAll('option[data-saved-value]').forEach(option => option.remove());
+    let option = findCountryLanguageOption(country, language, select);
+    if (!option) {
+      option = document.createElement('option');
+      option.dataset.country = country;
+      option.dataset.language = language;
+      option.dataset.savedValue = 'true';
+      option.textContent = `${country} / ${language} (saved value, not in the list)`;
+      select.prepend(option);
+    }
+    option.selected = true;
+  }
+
+  // The settings list has the same options as the sign-in list.
+  function setupSettingsCountryLanguage() {
+    const settingsSelect = byId('settingsCountryLanguage');
+    Array.from(byId('country_language').options)
+      .filter(option => !option.dataset.savedValue)
+      .forEach(option => settingsSelect.append(option.cloneNode(true)));
+  }
+
+  function showSelectedCountryLanguage(configuration) {
+    selectCountryLanguage(byId('country_language'), configuration.country, configuration.language);
+    selectCountryLanguage(byId('settingsCountryLanguage'), configuration.country, configuration.language);
   }
 
   function requestErrorMessage(error, fallback) {
@@ -566,19 +602,34 @@
     });
   }
 
+  // Removes fields from the layout, and groups (like a row of fields) left empty.
+  function layoutWithout(layout, hiddenKeys) {
+    if (!Array.isArray(layout)) {
+      return layout;
+    }
+    return layout
+      .filter(item => !hiddenKeys.has(item) && !hiddenKeys.has(item?.key))
+      .map(item => (Array.isArray(item?.items) && !item.key
+        ? { ...item, items: layoutWithout(item.items, hiddenKeys) }
+        : item))
+      .filter(item => !(Array.isArray(item?.items) && !item.key && item.items.length === 0));
+  }
+
+  // Country and language are set with the list above the form (#accountRegion).
+  function configWithoutRegionFields(config) {
+    const next = JSON.parse(JSON.stringify(config));
+    next.layout = layoutWithout(next.layout, new Set(['country', 'language']));
+    return next;
+  }
+
   function configWithoutDeviceSection(config) {
     const next = JSON.parse(JSON.stringify(config));
-    const hiddenKeys = new Set(['devices', 'thinq1', 'refresh_interval']);
-
-    next.layout = Array.isArray(next.layout)
-      ? next.layout.filter(item => !hiddenKeys.has(item) && !hiddenKeys.has(item?.key))
-      : next.layout;
-
+    next.layout = layoutWithout(next.layout, new Set(['devices', 'thinq1', 'refresh_interval']));
     return next;
   }
 
   async function renderConfigForm(configuration, options = {}) {
-    let config = await homebridge.getPluginConfigSchema();
+    let config = configWithoutRegionFields(await homebridge.getPluginConfigSchema());
 
     if (options.hideDevices) {
       config = configWithoutDeviceSection(config);
@@ -591,9 +642,18 @@
     configForm = homebridge.createForm(config, configuration);
 
     // watch for change events
+    showSelectedCountryLanguage(configuration);
+    showElement(byId('accountRegion'));
+    homebridge.fixScrollHeight();
+
     configForm.onChange((change) => {
       const previousDevices = Array.isArray(configuration.devices) ? configuration.devices : [];
+      // The form still holds the country and language it started with; the list above
+      // the form sets them, so keep those.
+      const { country, language } = configuration;
       Object.assign(configuration, change);
+      configuration.country = country;
+      configuration.language = language;
       configuration.devices = normalizeFormDevices(configuration.devices, previousDevices);
       homebridge.updatePluginConfig([configuration]);
     });
@@ -655,6 +715,7 @@
     byId('rememberUsername').checked = Boolean(configuration.username && configuration.password);
 
     hideElement(byId('configForm'));
+    hideElement(byId('accountRegion'));
     hideElement(byId('loginForm'));
 
     try {
@@ -699,13 +760,14 @@
         await homebridge.updatePluginConfig([configuration]);
       }
 
-      let optionSelected = findCountryLanguageOption(configuration.country, configuration.language);
-      if (!optionSelected) {
-        optionSelected = findCountryLanguageOption('US', 'en-US');
-        configuration.country = 'US';
-        configuration.language = 'en-US';
+      // Only a new configuration gets the default; a saved country and language are
+      // kept even when they are not in the list.
+      if (!configuration.country || !configuration.language) {
+        configuration.country = configuration.country || 'US';
+        configuration.language = configuration.language || 'en-US';
       }
-      optionSelected.selected = true;
+      setupSettingsCountryLanguage();
+      showSelectedCountryLanguage(configuration);
 
       await init(configuration);
     }
@@ -718,12 +780,15 @@
 
     setupAccordion();
 
-    byId('country_language').addEventListener('change', async (e) => {
+    const onCountryLanguageChange = async (e) => {
       const selected = e.currentTarget.selectedOptions[0];
       configuration.country = selected.dataset.country;
       configuration.language = selected.dataset.language;
+      showSelectedCountryLanguage(configuration);
       await homebridge.updatePluginConfig([configuration]);
-    });
+    };
+    byId('country_language').addEventListener('change', onCountryLanguageChange);
+    byId('settingsCountryLanguage').addEventListener('change', onCountryLanguageChange);
 
     byId('useTokenButton').addEventListener('click', async (e) => {
       e.preventDefault();
